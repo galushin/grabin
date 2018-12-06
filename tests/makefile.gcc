@@ -5,7 +5,7 @@
 LD = $(CXX)
 
 INC = -Ithird_party
-CXXFLAGS = -Wall -fexceptions
+CXXFLAGS = $(CXXFLAGS) -Wall -fexceptions
 RESINC = 
 LIBDIR = 
 LIB = 
