@@ -59,8 +59,42 @@ namespace grabin_test
         }
     };
 
+    template <class IntType>
+    struct ArbitraryInteger
+    {
+    public:
+        using value_type = IntType;
+
+        template <class Engine>
+        static value_type generate(Engine & rnd, size_t generation)
+        {
+            switch(generation)
+            {
+            case 0:
+                return value_type(0);
+
+            case 1:
+                return std::numeric_limits<value_type>::min();
+
+            case 2:
+                return std::numeric_limits<value_type>::max();
+
+            default:
+                std::uniform_int_distribution<value_type>
+                    distr(std::numeric_limits<value_type>::min(),
+                          std::numeric_limits<value_type>::max());
+                return distr(rnd);
+            }
+        }
+    };
+
     template <class T>
     struct Arbitrary;
+
+    template <>
+    struct Arbitrary<int>
+     : ArbitraryInteger<int>
+    {};
 
     template <>
     struct Arbitrary<double>
