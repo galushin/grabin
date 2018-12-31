@@ -32,8 +32,13 @@
 			<Add option="-Wall" />
 			<Add option="-fexceptions" />
 			<Add directory="third_party" />
+			<Add directory="../include" />
 		</Compiler>
+		<Unit filename="../include/grabin/statistics/mean.hpp" />
+		<Unit filename="grabin_test.cpp" />
+		<Unit filename="grabin_test.hpp" />
 		<Unit filename="main.cpp" />
+		<Unit filename="statistics/mean.cpp" />
 		<Extensions>
 			<code_completion />
 			<envvars />
