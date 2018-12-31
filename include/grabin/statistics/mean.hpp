@@ -101,7 +101,7 @@ namespace statistics
         mean_accumulator & operator()(value_type const & value)
         {
             ++ this->count_;
-            this->mean_ += (value - this->mean_) / static_cast<mean_type>(this->count_);
+            this->mean_ += (value - this->mean_) / mean_type(this->count_);
             return *this;
         }
 
