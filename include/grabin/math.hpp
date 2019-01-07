@@ -15,16 +15,32 @@ Grabin -- это свободной программное обеспечени�
 обеспечение. Если это не так, см. https://www.gnu.org/licenses/.
 */
 
-#include "grabin_test.hpp"
+/** @file grabin/math.hpp
+ @brief Функциональность, связанная с математикой
+*/
 
-namespace grabin_test
+#ifndef Z_GRABIN_MATH_HPP_INCLUDED
+#define Z_GRABIN_MATH_HPP_INCLUDED
+
+namespace grabin
 {
-    Random_engine & random_engine()
+inline namespace v1
+{
+    /** @brief Вычисление квадрата числа
+    @param x аргумент
+    @return <tt> x*x </tt>
+    */
+    template <class T>
+    T square(T const & x)
     {
-        auto const seed = static_cast<Random_engine::result_type>(std::time(nullptr));
-        static Random_engine instance(seed);
-
-        return instance;
+        return x*x;
     }
 }
-// namespace grabin_test
+// namespace v1
+}
+// namespace grabin
+
+
+
+#endif
+// Z_GRABIN_MATH_HPP_INCLUDED

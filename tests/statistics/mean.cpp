@@ -22,6 +22,9 @@ Grabin -- это свободной программное обеспечени�
 
 #include <type_traits>
 
+// @todo Добавить проверки типов количества элементов
+// @todo Добавить проверку типа value_type
+
 TEST_CASE("mean_accumulator : two values")
 {
     using Value = double;
@@ -79,7 +82,7 @@ TEST_CASE("mean_accumulator : floating-point arithmetic progression")
         }
 
         CHECK(acc.count() == n+1);
-        CHECK(abs(acc.mean() - mean_expected) <= 1e-10 * mean_expected);
+        CHECK(abs(acc.mean() - mean_expected) <= 1e-10 * std::abs(mean_expected));
     };
 
     for(auto generation = 0; generation < 100; ++ generation)

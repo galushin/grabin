@@ -34,11 +34,14 @@
 			<Add directory="third_party" />
 			<Add directory="../include" />
 		</Compiler>
+		<Unit filename="../include/grabin/math.hpp" />
 		<Unit filename="../include/grabin/statistics/mean.hpp" />
+		<Unit filename="../include/grabin/statistics/variance.hpp" />
 		<Unit filename="grabin_test.cpp" />
 		<Unit filename="grabin_test.hpp" />
 		<Unit filename="main.cpp" />
 		<Unit filename="statistics/mean.cpp" />
+		<Unit filename="statistics/variance.cpp" />
 		<Extensions>
 			<code_completion />
 			<envvars />
