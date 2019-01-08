@@ -22,9 +22,6 @@ Grabin -- это свободной программное обеспечени�
 
 #include <type_traits>
 
-// @todo Добавить проверки типов количества элементов
-// @todo Добавить проверку типа value_type
-
 TEST_CASE("mean_accumulator : two values")
 {
     using Value = double;
@@ -33,6 +30,8 @@ TEST_CASE("mean_accumulator : two values")
     {
         grabin::statistics::mean_accumulator<Value> acc;
 
+        static_assert(std::is_same<decltype(acc)::count_type, std::size_t>::value, "");
+        static_assert(std::is_same<decltype(acc)::value_type, Value>::value, "");
         static_assert(std::is_same<decltype(acc)::mean_type, Value>::value, "");
 
         CHECK(acc.count() == 0);
@@ -66,13 +65,18 @@ TEST_CASE("mean_accumulator : two values")
 TEST_CASE("mean_accumulator : floating-point arithmetic progression")
 {
     using Value = double;
+    using Counter = long;
+
+    static_assert(!std::is_same<Counter, std::size_t>::value, "");
 
     auto checker = [](Value const & a, Value const & b, Value const & n)
     {
         CAPTURE(a, b, n);
 
         auto const mean_expected = a + (b-a)/2;
-        grabin::statistics::mean_accumulator<Value> acc;
+        grabin::statistics::mean_accumulator<Value, Counter> acc;
+
+        static_assert(std::is_same<decltype(acc)::count_type, Counter>::value,"");
 
         auto const dx = (b - a)/n;
         for(auto i = 0*n; i <= n; ++ i)
@@ -102,6 +106,8 @@ TEST_CASE("mean_accumulator : two integer values")
     {
         grabin::statistics::mean_accumulator<Value> acc;
 
+        static_assert(std::is_same<decltype(acc)::count_type, std::size_t>::value, "");
+        static_assert(std::is_same<decltype(acc)::value_type, Value>::value, "");
         static_assert(std::is_same<decltype(acc)::mean_type, double>::value, "");
 
         CHECK(acc.count() == 0);
