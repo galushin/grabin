@@ -48,7 +48,7 @@ namespace grabin_test
                 return std::numeric_limits<value_type>::max();
 
             case 3:
-                std::numeric_limits<value_type>::lowest();
+                return std::numeric_limits<value_type>::lowest();
 
             default:
                 std::uniform_real_distribution<value_type>
