@@ -58,7 +58,7 @@ namespace statistics
     @tparam T тип значений, для которых вычисляется среднее
     @tparam Count тип количества элементов
     */
-    template <class T, class Count = std::size_t>
+    template <class T, class Count = std::ptrdiff_t>
     class mean_accumulator
     {
     public:

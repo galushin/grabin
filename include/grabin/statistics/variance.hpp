@@ -39,7 +39,7 @@ namespace statistics
     @tparam T тип значений, для которых вычисляется среднее
     @tparam Count тип количества элементов
     */
-    template <class T, class Count = std::size_t>
+    template <class T, class Count = std::ptrdiff_t>
     class variance_accumulator
     {
         using Mean = grabin::statistics::mean_accumulator<T, Count>;
@@ -84,7 +84,8 @@ namespace statistics
         {
             if(this->count() == 0)
             {
-                return variance_type(0);
+                // @todo assert(s2_ == 0)?
+                return this->s2_;
             }
             else
             {
