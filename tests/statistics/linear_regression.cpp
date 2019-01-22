@@ -71,3 +71,42 @@ TEST_CASE("linear_regression_accumulator : up to two points")
         checker(a, b, x1, x2);
     }
 }
+
+TEST_CASE("linear_regression_accumulator : on sample")
+{
+    using Value = double;
+    using Counter = std::size_t;
+
+    auto checker = [](Value const & slope, Value const & intercept, std::vector<Value> const & xs)
+    {
+        grabin::statistics::linear_regression_accumulator<Value, Value, Counter> acc;
+
+        static_assert(std::is_same<decltype(acc)::count_type, Counter>::value, "");
+
+        auto const f = [&](Value const & x) { return slope * x + intercept; };
+        for(auto const & x : xs)
+        {
+            acc(x, f(x));
+        }
+
+        CHECK(acc.count() == xs.size());
+        REQUIRE_THAT(acc.intercept(), Catch::Matchers::WithinAbs(intercept, 1e-6*std::abs(intercept)));
+        REQUIRE_THAT(acc.slope(), Catch::Matchers::WithinAbs(slope, 1e-6*std::abs(slope)));
+    };
+
+    for(auto generation = 0; generation < 100; ++ generation)
+    {
+        auto & rnd = grabin_test::random_engine();
+        std::uniform_real_distribution<Value> distr(-1e6, +1e6);
+
+        auto const a = distr(rnd);
+        auto const b = distr(rnd);
+
+        std::vector<Value> xs;
+        std::generate_n(std::back_inserter(xs), generation+2, [&]{ return distr(rnd); });
+
+        checker(a, b, xs);
+    }
+}
+
+// @todo Тест с выборкой и шумом
