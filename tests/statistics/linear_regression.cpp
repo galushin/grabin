@@ -109,4 +109,55 @@ TEST_CASE("linear_regression_accumulator : on sample")
     }
 }
 
-// @todo Тест с выборкой и шумом
+TEST_CASE("linear_regression_accumulator : on sample, with noise")
+{
+    using Value = double;
+    using Counter = std::size_t;
+
+    auto checker = [](Value const & slope, Value const & intercept,
+                      std::vector<Value> const & xs, std::vector<Value> const & es)
+    {
+        CAPTURE(xs.size());
+
+        grabin::statistics::linear_regression_accumulator<Value, Value, Counter> acc;
+
+        static_assert(std::is_same<decltype(acc)::count_type, Counter>::value, "");
+
+        auto const f = [&](Value const & x) { return slope * x + intercept; };
+
+        REQUIRE(xs.size() == es.size());
+
+        for(auto i = 0*xs.size(); i < xs.size(); ++ i)
+        {
+            auto const & x = xs[i];
+            acc(x, f(x) + es[i]);
+        }
+
+        CHECK(acc.count() == xs.size());
+        // @todo Статистически обоснованные величины уклонений
+        CHECK_THAT(acc.intercept(), Catch::Matchers::WithinAbs(intercept, 1e-3*std::abs(intercept)));
+        CHECK_THAT(acc.slope(), Catch::Matchers::WithinAbs(slope, 1e-3*std::abs(slope)));
+
+        // @todo Проверить среднее уклонение от эталонных значений
+    };
+
+    for(auto generation = 0; generation < 100; ++ generation)
+    {
+        auto & rnd = grabin_test::random_engine();
+        std::uniform_real_distribution<Value> distr(-1e6, +1e6);
+
+        auto const a = distr(rnd);
+        auto const b = distr(rnd);
+
+        auto const sample_size = 100;
+
+        std::vector<Value> xs;
+        std::generate_n(std::back_inserter(xs), sample_size, [&]{ return distr(rnd); });
+
+        std::vector<Value> es;
+        std::normal_distribution<Value> err_distr(0, 1e-2);
+        std::generate_n(std::back_inserter(es), sample_size, [&]{ return err_distr(rnd); });
+
+        checker(a, b, xs, es);
+    }
+}
