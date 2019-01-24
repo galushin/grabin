@@ -30,7 +30,7 @@ TEST_CASE("variance_accumulator : two values")
 
         grabin::statistics::variance_accumulator<Value> acc;
 
-        static_assert(std::is_same<decltype(acc)::count_type, std::size_t>::value, "");
+        static_assert(std::is_same<decltype(acc)::count_type, std::ptrdiff_t>::value, "");
         static_assert(std::is_same<decltype(acc)::value_type, Value>::value, "");
         static_assert(std::is_same<decltype(acc)::mean_type, Value>::value, "");
         static_assert(std::is_same<decltype(acc)::variance_type, Value>::value, "");
@@ -77,13 +77,13 @@ TEST_CASE("variance_accumulator : floating-point arithmetic progression")
 
     static_assert(!std::is_same<Counter, std::size_t>::value, "");
 
-    auto checker = [](Value const & a, Value const & b, Value const & n)
+    auto checker = [](Value const & a, Value const & b, Counter const & n)
     {
         CAPTURE(a, b, n);
 
         auto const dx = (b - a)/n;
         auto const mean_expected = a + (b-a)/2;
-        auto const var_expected = (grabin::square(n+1)-1)/12*grabin::square(dx);
+        auto const var_expected = (grabin::square(n+1)-1)/12.0*grabin::square(dx);
         auto const std_div_expected = std::sqrt(var_expected);
         grabin::statistics::variance_accumulator<Value, Counter> acc;
 
@@ -96,9 +96,9 @@ TEST_CASE("variance_accumulator : floating-point arithmetic progression")
         }
 
         CHECK(acc.count() == n+1);
-        CHECK(abs(acc.mean() - mean_expected) <= 1e-10 * std::abs(mean_expected));
-        REQUIRE(abs(acc.variance() - var_expected) <= 1e-10 * std::abs(var_expected));
-        REQUIRE(abs(acc.standard_deviation() - std_div_expected) <= 1e-10 * std::abs(std_div_expected));
+        REQUIRE_THAT(acc.mean(), Catch::Matchers::WithinAbs(mean_expected, 1e-10 * std::abs(mean_expected)));
+        REQUIRE_THAT(acc.variance(), Catch::Matchers::WithinAbs(var_expected, 1e-10 * std::abs(var_expected)));
+        REQUIRE_THAT(acc.standard_deviation(), Catch::Matchers::WithinAbs(std_div_expected, 1e-10 * std::abs(std_div_expected)));
     };
 
     for(auto generation = 0; generation < 100; ++ generation)
@@ -119,7 +119,7 @@ TEST_CASE("variance_accumulator : two integer values")
     {
         grabin::statistics::variance_accumulator<Value> acc;
 
-        static_assert(std::is_same<decltype(acc)::count_type, std::size_t>::value, "");
+        static_assert(std::is_same<decltype(acc)::count_type, std::ptrdiff_t>::value, "");
         static_assert(std::is_same<decltype(acc)::value_type, Value>::value, "");
         static_assert(std::is_same<decltype(acc)::mean_type, double>::value, "");
         static_assert(std::is_same<decltype(acc)::variance_type, double>::value, "");

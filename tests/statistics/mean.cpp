@@ -30,7 +30,7 @@ TEST_CASE("mean_accumulator : two values")
     {
         grabin::statistics::mean_accumulator<Value> acc;
 
-        static_assert(std::is_same<decltype(acc)::count_type, std::size_t>::value, "");
+        static_assert(std::is_same<decltype(acc)::count_type, std::ptrdiff_t>::value, "");
         static_assert(std::is_same<decltype(acc)::value_type, Value>::value, "");
         static_assert(std::is_same<decltype(acc)::mean_type, Value>::value, "");
 
@@ -69,7 +69,7 @@ TEST_CASE("mean_accumulator : floating-point arithmetic progression")
 
     static_assert(!std::is_same<Counter, std::size_t>::value, "");
 
-    auto checker = [](Value const & a, Value const & b, Value const & n)
+    auto checker = [](Value const & a, Value const & b, Counter const & n)
     {
         CAPTURE(a, b, n);
 
@@ -106,7 +106,7 @@ TEST_CASE("mean_accumulator : two integer values")
     {
         grabin::statistics::mean_accumulator<Value> acc;
 
-        static_assert(std::is_same<decltype(acc)::count_type, std::size_t>::value, "");
+        static_assert(std::is_same<decltype(acc)::count_type, std::ptrdiff_t>::value, "");
         static_assert(std::is_same<decltype(acc)::value_type, Value>::value, "");
         static_assert(std::is_same<decltype(acc)::mean_type, double>::value, "");
 
