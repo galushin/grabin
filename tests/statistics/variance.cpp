@@ -59,15 +59,7 @@ TEST_CASE("variance_accumulator : two values")
         REQUIRE_THAT(acc.standard_deviation(), Catch::Matchers::WithinAbs(std::sqrt(var2), 1e-10));
     };
 
-    for(auto generation = 0; generation < 100; ++ generation)
-    {
-        auto & rnd = grabin_test::random_engine();
-
-        auto const value_1 = grabin_test::Arbitrary<Value>::generate(rnd, generation);
-        auto const value_2 = grabin_test::Arbitrary<Value>::generate(rnd, generation);
-
-        checker(value_1, value_2);
-    }
+    grabin_test::check(checker);
 }
 
 TEST_CASE("variance_accumulator : floating-point arithmetic progression")
@@ -148,13 +140,5 @@ TEST_CASE("variance_accumulator : two integer values")
         REQUIRE_THAT(acc.standard_deviation(), Catch::Matchers::WithinAbs(std::sqrt(var2), 1e-10));
     };
 
-    for(auto generation = 0; generation < 100; ++ generation)
-    {
-        auto & rnd = grabin_test::random_engine();
-
-        auto const value_1 = grabin_test::Arbitrary<Value>::generate(rnd, generation);
-        auto const value_2 = grabin_test::Arbitrary<Value>::generate(rnd, generation);
-
-        checker(value_1, value_2);
-    }
+    grabin_test::check(checker);
 }
