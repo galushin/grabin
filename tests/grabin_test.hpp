@@ -18,8 +18,12 @@ Grabin -- это свободной программное обеспечени�
 #ifndef Z_GRABIN_TEST_HPP_INCLUDED
 #define Z_GRABIN_TEST_HPP_INCLUDED
 
+#include <catch2/catch.hpp>
+
 #include <ctime>
 #include <random>
+#include <tuple>
+#include <utility>
 
 namespace grabin_test
 {
@@ -88,6 +92,8 @@ namespace grabin_test
         }
     };
 
+
+    // @todo Задокументировать неполноту
     template <class T>
     struct Arbitrary;
 
@@ -100,6 +106,71 @@ namespace grabin_test
     struct Arbitrary<double>
      : ArbitraryReal<double>
     {};
+
+    template <class... Types>
+    struct Arbitrary<std::tuple<Types...>>
+    {
+        using value_type = std::tuple<Types...>;
+
+        template <class Engine>
+        static value_type generate(Engine & rnd, size_t generation)
+        {
+            return value_type(Arbitrary<Types>::generate(rnd, generation)...);
+        }
+    };
+
+    namespace detail
+    {
+        template <class F, class Tuple, std::size_t... I>
+        constexpr decltype(auto) apply_impl(F&& f, Tuple&& t, std::index_sequence<I...>)
+        {
+            // @todo Реализовать и использовать здесь invoke
+            return std::forward<F>(f)(std::get<I>(std::forward<Tuple>(t))...);
+        }
+    }
+    // namespace detail
+
+    template <class F, class Tuple>
+    constexpr decltype(auto) apply(F&& f, Tuple&& t)
+    {
+        return detail::apply_impl(
+            std::forward<F>(f), std::forward<Tuple>(t),
+            std::make_index_sequence<std::tuple_size<std::remove_reference_t<Tuple>>::value>{});
+    }
+
+    namespace detail
+    {
+        template <class R, class... Args>
+        void check_impl(R(property)(Args...))
+        {
+            using Value = std::tuple<std::remove_cv_t<std::remove_reference_t<Args>>...>;
+            auto & rnd = grabin_test::random_engine();
+
+            for(auto generation = 0; generation < 100; ++ generation)
+            {
+                auto args = grabin_test::Arbitrary<Value>::generate(rnd, generation);
+
+                // @todo Анализировать возвращаемое значение?
+                grabin_test::apply(property, args);
+            }
+        }
+    }
+    // namespace detail
+
+    template <class Lambda>
+    void check(Lambda property)
+    {
+        return detail::check_impl(+property);
+    }
+
+namespace Matchers
+{
+    inline auto WithinRel(double target, double rel_error)
+    {
+        return ::Catch::Matchers::WithinAbs(target, std::abs(target) * rel_error);
+    }
+}
+// namespace Matchers
 }
 // namespace grabin_test
 

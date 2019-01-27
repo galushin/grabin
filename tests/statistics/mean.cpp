@@ -51,15 +51,7 @@ TEST_CASE("mean_accumulator : two values")
         CHECK_THAT(acc.mean(), Catch::Matchers::WithinAbs(avg2, 1e-10));
     };
 
-    for(auto generation = 0; generation < 100; ++ generation)
-    {
-        auto & rnd = grabin_test::random_engine();
-
-        auto const value_1 = grabin_test::Arbitrary<Value>::generate(rnd, generation);
-        auto const value_2 = grabin_test::Arbitrary<Value>::generate(rnd, generation);
-
-        checker(value_1, value_2);
-    }
+    grabin_test::check(checker);
 }
 
 TEST_CASE("mean_accumulator : floating-point arithmetic progression")
@@ -86,7 +78,7 @@ TEST_CASE("mean_accumulator : floating-point arithmetic progression")
         }
 
         CHECK(acc.count() == n+1);
-        CHECK(abs(acc.mean() - mean_expected) <= 1e-10 * std::abs(mean_expected));
+        CHECK_THAT(acc.mean(), grabin_test::Matchers::WithinRel(mean_expected, 1e-10));
     };
 
     for(auto generation = 0; generation < 100; ++ generation)
@@ -127,15 +119,7 @@ TEST_CASE("mean_accumulator : two integer values")
         CHECK_THAT(acc.mean(), Catch::Matchers::WithinAbs(avg2, 1e-10));
     };
 
-    for(auto generation = 0; generation < 100; ++ generation)
-    {
-        auto & rnd = grabin_test::random_engine();
-
-        auto const value_1 = grabin_test::Arbitrary<Value>::generate(rnd, generation);
-        auto const value_2 = grabin_test::Arbitrary<Value>::generate(rnd, generation);
-
-        checker(value_1, value_2);
-    }
+    grabin_test::check(checker);
 }
 
 TEST_CASE("mean_accumulator : integer arithmetic progression")
