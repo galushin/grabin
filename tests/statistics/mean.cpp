@@ -78,7 +78,7 @@ TEST_CASE("mean_accumulator : floating-point arithmetic progression")
         }
 
         CHECK(acc.count() == n+1);
-        CHECK(abs(acc.mean() - mean_expected) <= 1e-10 * std::abs(mean_expected));
+        CHECK_THAT(acc.mean(), grabin_test::Matchers::WithinRel(mean_expected, 1e-10));
     };
 
     for(auto generation = 0; generation < 100; ++ generation)

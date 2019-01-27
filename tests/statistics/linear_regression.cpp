@@ -55,8 +55,8 @@ TEST_CASE("linear_regression_accumulator : up to two points")
         acc(x_2, y_2);
 
         CHECK(acc.count() == 2);
-        REQUIRE_THAT(acc.intercept(), Catch::Matchers::WithinAbs(intercept, 1e-6*std::abs(intercept)));
-        REQUIRE_THAT(acc.slope(), Catch::Matchers::WithinAbs(slope, 1e-6*std::abs(slope)));
+        REQUIRE_THAT(acc.intercept(), grabin_test::Matchers::WithinRel(intercept, 1e-6));
+        REQUIRE_THAT(acc.slope(), grabin_test::Matchers::WithinRel(slope, 1e-6));
     };
 
     for(auto generation = 0; generation < 100; ++ generation)
@@ -90,8 +90,8 @@ TEST_CASE("linear_regression_accumulator : on sample")
         }
 
         CHECK(acc.count() == xs.size());
-        REQUIRE_THAT(acc.intercept(), Catch::Matchers::WithinAbs(intercept, 1e-6*std::abs(intercept)));
-        REQUIRE_THAT(acc.slope(), Catch::Matchers::WithinAbs(slope, 1e-6*std::abs(slope)));
+        REQUIRE_THAT(acc.intercept(), grabin_test::Matchers::WithinRel(intercept, 1e-6));
+        REQUIRE_THAT(acc.slope(), grabin_test::Matchers::WithinRel(slope, 1e-6));
     };
 
     for(auto generation = 0; generation < 100; ++ generation)
@@ -135,8 +135,8 @@ TEST_CASE("linear_regression_accumulator : on sample, with noise")
 
         CHECK(acc.count() == xs.size());
         // @todo Статистически обоснованные величины уклонений
-        CHECK_THAT(acc.intercept(), Catch::Matchers::WithinAbs(intercept, 1e-3*std::abs(intercept)));
-        CHECK_THAT(acc.slope(), Catch::Matchers::WithinAbs(slope, 1e-3*std::abs(slope)));
+        CHECK_THAT(acc.intercept(), grabin_test::Matchers::WithinRel(intercept, 1e-3));
+        CHECK_THAT(acc.slope(), grabin_test::Matchers::WithinRel(slope, 1e-3));
 
         // @todo Проверить среднее уклонение от эталонных значений
     };

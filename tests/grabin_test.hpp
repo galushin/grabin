@@ -18,6 +18,8 @@ Grabin -- это свободной программное обеспечени�
 #ifndef Z_GRABIN_TEST_HPP_INCLUDED
 #define Z_GRABIN_TEST_HPP_INCLUDED
 
+#include <catch2/catch.hpp>
+
 #include <ctime>
 #include <random>
 #include <tuple>
@@ -160,6 +162,15 @@ namespace grabin_test
     {
         return detail::check_impl(+property);
     }
+
+namespace Matchers
+{
+    inline auto WithinRel(double target, double rel_error)
+    {
+        return ::Catch::Matchers::WithinAbs(target, std::abs(target) * rel_error);
+    }
+}
+// namespace Matchers
 }
 // namespace grabin_test
 

@@ -88,9 +88,9 @@ TEST_CASE("variance_accumulator : floating-point arithmetic progression")
         }
 
         CHECK(acc.count() == n+1);
-        REQUIRE_THAT(acc.mean(), Catch::Matchers::WithinAbs(mean_expected, 1e-10 * std::abs(mean_expected)));
-        REQUIRE_THAT(acc.variance(), Catch::Matchers::WithinAbs(var_expected, 1e-10 * std::abs(var_expected)));
-        REQUIRE_THAT(acc.standard_deviation(), Catch::Matchers::WithinAbs(std_div_expected, 1e-10 * std::abs(std_div_expected)));
+        REQUIRE_THAT(acc.mean(), grabin_test::Matchers::WithinRel(mean_expected, 1e-10));
+        REQUIRE_THAT(acc.variance(), grabin_test::Matchers::WithinRel(var_expected, 1e-10));
+        REQUIRE_THAT(acc.standard_deviation(), grabin_test::Matchers::WithinRel(std_div_expected, 1e-10));
     };
 
     for(auto generation = 0; generation < 100; ++ generation)
