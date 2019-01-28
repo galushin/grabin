@@ -43,6 +43,7 @@ clean: clean_debug clean_release
 before_debug: 
 	test -d ./bin/Debug || mkdir -p ./bin/Debug
 	test -d $(OBJDIR_DEBUG) || mkdir -p $(OBJDIR_DEBUG)
+	test -d $(OBJDIR_DEBUG)/math || mkdir -p $(OBJDIR_DEBUG)/math
 	test -d $(OBJDIR_DEBUG)/statistics || mkdir -p $(OBJDIR_DEBUG)/statistics
 
 after_debug: 
@@ -74,11 +75,13 @@ clean_debug:
 	rm -f $(OBJ_DEBUG) $(OUT_DEBUG)
 	rm -rf ./bin/Debug
 	rm -rf $(OBJDIR_DEBUG)
+	rm -rf $(OBJDIR_DEBUG)/math
 	rm -rf $(OBJDIR_DEBUG)/statistics
 
 before_release: 
 	test -d ./bin/Release || mkdir -p ./bin/Release
 	test -d $(OBJDIR_RELEASE) || mkdir -p $(OBJDIR_RELEASE)
+	test -d $(OBJDIR_RELEASE)/math || mkdir -p $(OBJDIR_RELEASE)/math
 	test -d $(OBJDIR_RELEASE)/statistics || mkdir -p $(OBJDIR_RELEASE)/statistics
 
 after_release: 
@@ -110,6 +113,7 @@ clean_release:
 	rm -f $(OBJ_RELEASE) $(OUT_RELEASE)
 	rm -rf ./bin/Release
 	rm -rf $(OBJDIR_RELEASE)
+	rm -rf $(OBJDIR_RELEASE)/math
 	rm -rf $(OBJDIR_RELEASE)/statistics
 
 .PHONY: before_debug after_debug clean_debug before_release after_release clean_release
