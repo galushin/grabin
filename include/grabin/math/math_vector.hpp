@@ -69,8 +69,9 @@ inline namespace v1
         @post Элементы <tt>*this</tt> равны соответствующим элементам @c values
         @todo Использовать begin/end, не являющиеся функциями-членами
         @todo Не допускать пустых контейнеров?
+        @todo Более качественное ограничение типа шаблонного параметра
         */
-        template <class Range>
+        template <class Range, class = decltype(std::declval<Range&>().begin())>
         explicit math_vector(Range const & values)
          : data_(values.begin(), values.end())
         {}
