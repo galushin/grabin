@@ -27,10 +27,17 @@ Grabin -- это свободной программное обеспечени�
 
 namespace grabin_test
 {
+    // Генератор случайных чисел
     using Random_engine = std::mt19937;
 
     Random_engine & random_engine();
 
+    // Получение приозвольных значений
+    // @todo Задокументировать неполноту
+    template <class T>
+    struct Arbitrary;
+
+    // Вспомогательные возможности для Arbitrary
     template <class RealType>
     struct ArbitraryReal
     {
@@ -92,11 +99,40 @@ namespace grabin_test
         }
     };
 
+    template <class Container>
+    struct ArbitraryContainer;
 
-    // @todo Задокументировать неполноту
-    template <class T>
-    struct Arbitrary;
+    template <class T, class A>
+    struct ArbitraryContainer<std::vector<T, A>>
+    {
+        using value_type = std::vector<T, A>;
 
+        template <class Engine>
+        static value_type generate(Engine & rnd, size_t generation)
+        {
+            // @todo Выбирать размер случайно, иначе все вектора одного
+            // поколения будут иметь одинаковый размер, то есть мы ограничим
+            // покрываемое тестами пространство
+            if(generation == 0)
+            {
+                return {};
+            }
+            else
+            {
+                value_type result(generation);
+
+                for(auto & x : result)
+                {
+                    // @todo Подумать, как больше разнообразить элементы
+                    x = Arbitrary<T>::generate(rnd, generation - 1);
+                }
+
+                return result;
+            }
+        }
+    };
+
+    // Специализации Arbitrary
     template <>
     struct Arbitrary<int>
      : ArbitraryInteger<int>
@@ -119,6 +155,13 @@ namespace grabin_test
         }
     };
 
+    // @todo Можно ли написать одну специализацию для всех контейнеров
+    template <class T, class A>
+    struct Arbitrary<std::vector<T, A>>
+     : ArbitraryContainer<std::vector<T, A>>
+    {};
+
+    // Проверка свойств
     namespace detail
     {
         template <class F, class Tuple, std::size_t... I>
