@@ -110,25 +110,21 @@ namespace grabin_test
         template <class Engine>
         static value_type generate(Engine & rnd, size_t generation)
         {
-            // @todo Выбирать размер случайно, иначе все вектора одного
-            // поколения будут иметь одинаковый размер, то есть мы ограничим
-            // покрываемое тестами пространство
-            if(generation == 0)
+            std::uniform_int_distribution<typename value_type::size_type>
+                distr(0, generation);
+            auto const n = distr(rnd);
+
+            if(n == 0)
             {
                 return {};
             }
-            else
-            {
-                value_type result(generation);
 
-                for(auto & x : result)
-                {
-                    // @todo Подумать, как больше разнообразить элементы
-                    x = Arbitrary<T>::generate(rnd, generation - 1);
-                }
+            value_type result;
+            result.reserve(n);
+            std::generate_n(std::back_inserter(result), n,
+                            [&]{ return Arbitrary<T>::generate(rnd, distr(rnd));});
 
-                return result;
-            }
+            return result;
         }
     };
 
@@ -186,6 +182,7 @@ namespace grabin_test
         template <class R, class... Args>
         void check_impl(R(property)(Args...))
         {
+            // @todo Проверить типы: недопустима передача параметра по неконстантной ссылке
             using Value = std::tuple<std::remove_cv_t<std::remove_reference_t<Args>>...>;
             auto & rnd = grabin_test::random_engine();
 
@@ -194,6 +191,7 @@ namespace grabin_test
                 auto args = grabin_test::Arbitrary<Value>::generate(rnd, generation);
 
                 // @todo Анализировать возвращаемое значение?
+                // @todo Поддержка предусловий: возможность запросить ещё значения без увеличиения generation
                 grabin_test::apply(property, args);
             }
         }

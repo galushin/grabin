@@ -25,17 +25,84 @@ Grabin -- это свободной программное обеспечени�
 
 #include <cassert>
 #include <cstddef>
+#include <stdexcept>
 #include <vector>
 
 namespace grabin
 {
 inline namespace v1
 {
+    /** @brief Стратегия проверок для шаблона класса @c math_vector, которая при
+    обнаружении ошибок порождает исключения.
+    */
+    struct math_vector_throws_check_policy
+    {
+        /** @brief Обеспечение совпадения размерностей
+        @param x, y векторы, размерности которых должны совпадать
+        @throw std::logic_error, если равенство <tt>x.dim() == y.dim()</tt> не
+        выполняется
+        */
+        template <class T>
+        static void ensure_equal_dimensions(T const & x, T const & y)
+        {
+            if(x.dim() != y.dim())
+            {
+                // @todo Более подробная информация об ошибке
+                throw std::logic_error("Dimensions must be equal");
+            }
+        }
+
+        /** @brief Обеспечение корректности индекса
+        @param x вектор
+        @param index индекс
+        @throw std::out_of_range, если @c index не принадлежит интервалу
+        <tt>[0;x.dim())</tt>
+        */
+        template <class Vector>
+        static void check_index(Vector const & x,
+                                typename Vector::size_type index)
+        {
+            if(index < 0 || x.dim() <= index)
+            {
+                // @todo Более подробная информация об ошибке
+                throw std::out_of_range("Invalid index");
+            }
+        }
+    };
+
+    /** @brief Стратегия проверок для шаблона класса @c math_vector, которая не
+    выполняется никаких проверок.
+    */
+    struct math_vector_no_checks_policy
+    {
+        /** @brief Обеспечение совпадения размерностей
+        @param x, y векторы, размерности которых должны совпадать
+        */
+        template <class T>
+        static void ensure_equal_dimensions(T const &, T const &)
+        {}
+
+        /** @brief Обеспечение корректности индекса
+        @param x вектор
+        @param index индекс
+        */
+        template <class Vector>
+        static void check_index(Vector const &, typename Vector::size_type)
+        {}
+    };
+
     /** @brief Математический вектор
     @tparam T тип элементов
-    @todo Подумать, нужен ли конструктор по умолчанию?
+    @tparam CheckPolicy стратегия проверок и обработки ошибок
+
+    Первоночально была идея запретить конструктор без аргументов и вообще
+    векторы нулевой размерности. Но тогда возникает вопрос: в каком состоянии
+    находится вектор, содержимое которого было перемещено? Так как перемщеение
+    является важной современной техникой оптимизации, запрещать его было бы не
+    целесообразно. Поэтому было решено добавить конструктор без аругментов,
+    создающий вектор нулевой размерности.
     */
-    template <class T>
+    template <class T, class CheckPolicy = math_vector_throws_check_policy>
     class math_vector
     {
         using Container = std::vector<T>;
@@ -54,7 +121,15 @@ inline namespace v1
         /// @brief Тип константного итератора
         using const_iterator = typename Container::const_iterator;
 
+        /// @brief Стратегия проверок и обработки ошибок
+        using check_policy = CheckPolicy;
+
         // Создание, копирование, уничтожение
+        /** @brief Конструктор по-умолчанию
+        @brief <tt>this->dim() == 0</tt>
+        */
+        math_vector() = default;
+
         /** @brief Конструктор с явным указанием размерности
         @param dim размерность вектора
         @post <tt> this->dim() == dim </tt>
@@ -68,13 +143,29 @@ inline namespace v1
         @post <tt> this->dim() == (values.end() - values.begin())</tt>
         @post Элементы <tt>*this</tt> равны соответствующим элементам @c values
         @todo Использовать begin/end, не являющиеся функциями-членами
-        @todo Не допускать пустых контейнеров?
         @todo Более качественное ограничение типа шаблонного параметра
         */
         template <class Range, class = decltype(std::declval<Range&>().begin())>
         explicit math_vector(Range const & values)
          : data_(values.begin(), values.end())
         {}
+
+        /// @brief Конструктор копий
+        math_vector(math_vector const &) = default;
+        math_vector(math_vector &&) = default;
+
+        /** @brief Конструктор на основе списка инициализации
+        @param values список значений
+        @post <tt>this->dim() == values.size()</tt>
+        @post Элементы <tt>*this</tt> равны соответствующим элементам @c values
+        */
+        math_vector(std::initializer_list<value_type> values)
+         : data_(values.begin(), values.end())
+        {}
+
+        /// @brief Оператор присваивания
+        math_vector & operator=(math_vector const &) = default;
+        math_vector & operator=(math_vector &&) = default;
 
         // Размер
         // @todo Свободная фукнция dim?
@@ -86,6 +177,52 @@ inline namespace v1
         {
             return this->data_.size();
         }
+
+        // Доступ к данным
+        //@{
+        /** @brief Индексированный доступ к данным
+        @param index индекс элемента
+        @return Ссылка на элемент с индексом @c index
+        @throw То же, что <tt>check::check_index(*this, index)</tt>
+        */
+        value_type & operator[](size_type index)
+        {
+            // @todo Использовать (самодельный) as_const
+            return const_cast<value_type&>(static_cast<math_vector const &>(*this)[index]);
+        }
+
+        value_type const & operator[](size_type index) const
+        {
+            check_policy::check_index(*this, index);
+
+            return this->data_[index];
+        }
+        //@}
+
+        //@{
+        /** @brief Индексированный доступ к данным c проверкой индекса
+        @param index индекс элемента
+        @return Ссылка на элемент с индексом @c index
+        std::out_of_range, если @c index не принадлежит интервалу
+        <tt>[0;x.dim())</tt>
+        */
+        value_type & at(size_type index)
+        {
+            // @todo Использовать (самодельный) as_const
+            return const_cast<value_type&>(static_cast<math_vector const &>(*this).at(index));
+        }
+
+        value_type const & at(size_type index) const
+        {
+            if(index < 0 || this->dim() <= index)
+            {
+                // @todo Более подробная информация об ошибке
+                throw std::out_of_range("math_vector::at - Invalid index");
+            }
+
+            return this->data_[index];
+        }
+        //@}
 
         // Итераторы
         // @todo Упрощение определения пар константных/неконстантных операций
@@ -138,10 +275,12 @@ inline namespace v1
         @return <tt>*this</tt>
         @post К каждому элементу <tt>*this</tt> прибавляется соответствующий
         элемент @c x
+        @throws То же, что <tt>check_policy::ensure_equal_dimensions(*this, x)</tt>
         */
         math_vector & operator+=(math_vector const & x)
         {
-            // @todo Проверять за счёт политики проверки
+            check_policy::ensure_equal_dimensions(*this, x);
+
             assert(x.dim() == this->dim());
 
             for(auto i = this->begin(); i != this->end(); ++ i)
@@ -162,8 +301,9 @@ inline namespace v1
     @param x,y аргументы
     @return <tt> std::equal(x.begin(), x.end(), y.begin(), y.end()) </tt>
     */
-    template <class T>
-    bool operator==(math_vector<T> const & x, math_vector<T> const & y)
+    template <class T, class Check>
+    bool operator==(math_vector<T, Check> const & x,
+                    math_vector<T, Check> const & y)
     {
         return std::equal(x.begin(), x.end(), y.begin(), y.end());
     }
@@ -173,8 +313,9 @@ inline namespace v1
     @param x,y аргументы
     @return <tt> !(x == y) </tt>
     */
-    template <class T>
-    bool operator!=(math_vector<T> const & x, math_vector<T> const & y)
+    template <class T, class Check>
+    bool operator!=(math_vector<T, Check> const & x,
+                    math_vector<T, Check> const & y)
     {
         return !(x == y);
     }
@@ -189,19 +330,19 @@ inline namespace v1
     @todo Смешанные типы аргументов
     @todo Автоматизация определения этого оператора
     */
-    template <class T>
-    math_vector<T>
-    operator*(math_vector<T> x,
-              typename math_vector<T>::value_type const & a)
+    template <class T, class Check>
+    math_vector<T, Check>
+    operator*(math_vector<T, Check> x,
+              typename math_vector<T, Check>::value_type const & a)
     {
         x *= a;
         return x;
     }
 
-    template <class T>
-    math_vector<T>
-    operator*(typename math_vector<T>::value_type const & a,
-              math_vector<T> const & x)
+    template <class T, class Check>
+    math_vector<T, Check>
+    operator*(typename math_vector<T, Check>::value_type const & a,
+              math_vector<T, Check> const & x)
     {
         // @todo Что если умножение скаляров не коммутативно
         return x * a;
@@ -215,10 +356,11 @@ inline namespace v1
     @todo Оптимизация для случаев, когда один из аргументов является rvalue
     @return Вектор, размерность которого равна размерности операндов, а элементы
     равны сумме соответствующих элементов операндов.
+    @throw То же, что <tt> Check::ensure_equal_dimensions(*this, x) </tt>
     */
-    template <class T>
-    math_vector<T>
-    operator+(math_vector<T> x, math_vector<T> const & y)
+    template <class T, class Check>
+    math_vector<T, Check>
+    operator+(math_vector<T, Check> x, math_vector<T, Check> const & y)
     {
         x += y;
         return x;

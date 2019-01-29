@@ -23,18 +23,17 @@ Grabin -- это свободной программное обеспечени�
 // @todo Перенести в ../grabin_test.hpp ?
 namespace grabin_test
 {
-    template <class T>
-    struct Arbitrary<grabin::math_vector<T>>
+    template <class T, class Check>
+    struct Arbitrary<grabin::math_vector<T, Check>>
     {
-        using value_type = grabin::math_vector<T>;
+        using value_type = grabin::math_vector<T, Check>;
 
         template <class Engine>
         static value_type generate(Engine & rnd, size_t generation)
         {
             using Vec = std::vector<typename value_type::value_type>;
 
-            // @todo Поддерживать ли пустые вектора?
-            return value_type(Arbitrary<Vec>::generate(rnd, generation + 1));
+            return value_type(Arbitrary<Vec>::generate(rnd, generation));
         }
     };
 }
@@ -42,7 +41,7 @@ namespace grabin_test
 
 // @todo Поддержка вывода на экран в Catch2
 
-TEST_CASE("math_vector : types and ctor with size")
+TEST_CASE("math_vector : types and default ctor")
 {
     using Value = int;
     using Vector = grabin::math_vector<Value>;
@@ -56,6 +55,17 @@ TEST_CASE("math_vector : types and ctor with size")
     static_assert(std::is_same<std::iterator_traits<CIter>::iterator_category,
                                std::random_access_iterator_tag>::value, "");
     static_assert(std::is_same<std::iterator_traits<CIter>::value_type, Value>::value, "");
+
+    Vector x;
+
+    CHECK(x.dim() == 0);
+    CHECK(x.begin() == x.end());
+}
+
+TEST_CASE("math_vector : ctor with size")
+{
+    using Value = int;
+    using Vector = grabin::math_vector<Value>;
 
     for(auto n = 1; n < 20; ++ n)
     {
@@ -77,7 +87,7 @@ TEST_CASE("math_vector : range ctor")
 
     auto property = [](std::vector<Value> const & values)
     {
-        grabin::math_vector<Value> xs(values);
+        grabin::math_vector<Value> const xs(values);
 
         CHECK(xs.dim() == values.size());
 
@@ -88,6 +98,27 @@ TEST_CASE("math_vector : range ctor")
     grabin_test::check(property);
 }
 
+TEST_CASE("math_vector : initializer list ctor")
+{
+    using Value = int;
+    using Vector = grabin::math_vector<Value>;
+
+    auto property = [](Value const & x, Value const & y, Value const & z)
+    {
+        Vector r{x, y, z};
+
+        REQUIRE(r.dim() == 3);
+        CHECK(r.begin()[0] == x);
+        CHECK(r.begin()[1] == y);
+        CHECK(r.begin()[2] == z);
+    };
+
+    grabin_test::check(property);
+}
+
+// @todo Конструктор с размером и значением элементов
+// @todo Типы (неконстантных) итераторов и они должны быть произвольного доступа
+
 TEST_CASE("math_vector : equality")
 {
     using Value = int;
@@ -95,6 +126,9 @@ TEST_CASE("math_vector : equality")
 
     auto property = [](Vector const & x, Vector const & y)
     {
+        CHECK(x == x);
+        CHECK(y == y);
+
         if(std::equal(x.begin(), x.end(), y.begin(), y.end()))
         {
             CHECK(x == y);
@@ -110,6 +144,223 @@ TEST_CASE("math_vector : equality")
     grabin_test::check(property);
 }
 
+TEST_CASE("math_vector: copy ctor")
+{
+    using Value = int;
+    using Vector = grabin::math_vector<Value>;
+
+    auto property = [](Vector const & x)
+    {
+        Vector const y = x;
+
+        CHECK(y == x);
+    };
+
+    grabin_test::check(property);
+}
+
+TEST_CASE("math_vector: move ctor")
+{
+    using Value = int;
+    using Vector = grabin::math_vector<Value>;
+
+    auto property = [](Vector const & x_old)
+    {
+        auto x = x_old;
+
+        auto const first = x.begin();
+        auto const last = x.end();
+
+        auto y = std::move(x);
+
+        CHECK(y == x_old);
+        CHECK(y.begin() == first);
+        CHECK(y.end() == last);
+        CHECK(x == Vector());
+    };
+
+    grabin_test::check(property);
+}
+
+TEST_CASE("math_vector: assign")
+{
+    using Value = int;
+    using Vector = grabin::math_vector<Value>;
+
+    auto property = [](Vector x, Vector const & y)
+    {
+        x = y;
+
+        CHECK(y == x);
+    };
+
+    grabin_test::check(property);
+}
+
+TEST_CASE("math_vector: move assign")
+{
+    using Value = int;
+    using Vector = grabin::math_vector<Value>;
+
+    auto property = [](Vector const & x_old, Vector y)
+    {
+        auto x = x_old;
+
+        auto const first = x.begin();
+        auto const last = x.end();
+
+        y = std::move(x);
+
+        CHECK(y == x_old);
+        CHECK(y.begin() == first);
+        CHECK(y.end() == last);
+
+        // @todo Что должно быть с x после того, как его содержимое было перемещено?
+    };
+
+    grabin_test::check(property);
+}
+
+// Индексированный доступ
+TEST_CASE("math_vector: const indexing")
+{
+    using Value = int;
+    using Vector = grabin::math_vector<Value>;
+
+    auto property = [](Vector const & x)
+    {
+        for(auto i = 0*x.dim(); i < x.dim(); ++ i)
+        {
+            CHECK(x[i] == x.begin()[i]);
+
+            CHECK_THROWS_AS(x[x.dim() + i], std::out_of_range);
+
+            if(i > 0)
+            {
+                CHECK_THROWS_AS(x[-i], std::out_of_range);
+            }
+        }
+    };
+
+    grabin_test::check(property);
+}
+
+TEST_CASE("math_vector: non-const indexing")
+{
+    using Value = int;
+    using Vector = grabin::math_vector<Value>;
+
+    auto property = [](Vector const & x_old, Vector::size_type index, Value const & a)
+    {
+        auto x = x_old;
+
+        x[index] = a;
+
+        auto const & x_c = x;
+        CHECK(x_c[index] == a);
+
+        for(auto i = 0*x.dim(); i < x.dim(); ++ i)
+        {
+            if(i != index)
+            {
+                CHECK(x_c[i] == x_old[i]);
+            }
+        }
+
+        CHECK_THROWS_AS(x[x.dim() + index], std::out_of_range);
+
+        if(index > 0)
+        {
+            CHECK_THROWS_AS(x[-index], std::out_of_range);
+        }
+    };
+
+    for(auto generation = 0; generation < 100; ++ generation)
+    {
+        auto & rnd = grabin_test::random_engine();
+
+        grabin::math_vector<Value> xs(generation+1);
+        std::uniform_int_distribution<Value> distr(0, generation);
+        std::generate(xs.begin(), xs.end(),
+                      [&]{ return grabin_test::Arbitrary<Value>::generate(rnd, distr(rnd)); });
+
+        auto const value = grabin_test::Arbitrary<Value>::generate(rnd, generation);
+        auto const index = std::uniform_int_distribution<Value>(0, xs.dim()-1)(rnd);
+
+        property(xs, index, value);
+    }
+}
+
+TEST_CASE("math_vector: const at")
+{
+    using Value = int;
+    using Vector = grabin::math_vector<Value, grabin::math_vector_no_checks_policy>;
+
+    auto property = [](Vector const & x)
+    {
+        for(auto i = 0*x.dim(); i < x.dim(); ++ i)
+        {
+            CHECK(x.at(i) == x.begin()[i]);
+
+            CHECK_THROWS_AS(x.at(x.dim() + i), std::out_of_range);
+
+            if(i > 0)
+            {
+                CHECK_THROWS_AS(x.at(-i), std::out_of_range);
+            }
+        }
+    };
+
+    grabin_test::check(property);
+}
+
+TEST_CASE("math_vector: non-const at")
+{
+    using Value = int;
+    using Vector = grabin::math_vector<Value, grabin::math_vector_no_checks_policy>;
+
+    auto property = [](Vector const & x_old, Vector::size_type index, Value const & a)
+    {
+        auto x = x_old;
+
+        x.at(index) = a;
+
+        auto const & x_c = x;
+        CHECK(x_c[index] == a);
+
+        for(auto i = 0*x.dim(); i < x.dim(); ++ i)
+        {
+            if(i != index)
+            {
+                CHECK(x_c[i] == x_old[i]);
+            }
+        }
+
+        CHECK_THROWS_AS(x.at(x.dim() + index), std::out_of_range);
+
+        if(index > 0)
+        {
+            CHECK_THROWS_AS(x.at(-index), std::out_of_range);
+        }
+    };
+
+    for(auto generation = 0; generation < 100; ++ generation)
+    {
+        auto & rnd = grabin_test::random_engine();
+
+        Vector xs(generation+1);
+        std::uniform_int_distribution<Value> distr(0, generation);
+        std::generate(xs.begin(), xs.end(),
+                      [&]{ return grabin_test::Arbitrary<Value>::generate(rnd, distr(rnd)); });
+
+        auto const value = grabin_test::Arbitrary<Vector::size_type>::generate(rnd, generation);
+        auto const index = std::uniform_int_distribution<Value>(0, xs.dim()-1)(rnd);
+
+        property(xs, index, value);
+    }
+}
+
+// Линейные операции
 TEST_CASE("math_vector: multiplication by scalar")
 {
     using Value = int;
@@ -120,6 +371,7 @@ TEST_CASE("math_vector: multiplication by scalar")
         auto const y1 = [&]()
         {
             auto y = x;
+
             for(auto & e : y)
             {
                 e *= a;
@@ -220,12 +472,21 @@ TEST_CASE("math_vector: operator plus")
     }
 }
 
-// @todo Сложение векторов - обработка случая разной размерности
+#include <stdexcept>
 
-// @todo Оператор индексирования
-// @todo Стратегия проверки
-// @todo Конструктор копий, присваивание
-// @todo Конструктор копий и присваивание с перемещением
-// @todo Тест конструктора, принимающего список инициализации
-// @todo Конструктор с размером и значением элементов
-// @todo Типы (неконстантных) итераторов и они должны быть произвольного доступа
+TEST_CASE("math_vector: operator plus throws on different dimensions")
+{
+    using Value = int;
+    using Vector = grabin::math_vector<Value>;
+
+    auto property = [](Vector x, Vector const & y)
+    {
+        if(x.dim() != y.dim())
+        {
+            CHECK_THROWS_AS(x += y, std::logic_error);
+            CHECK_THROWS_AS(x + y, std::logic_error);
+        }
+    };
+
+    grabin_test::check(property);
+}
