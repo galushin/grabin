@@ -34,7 +34,7 @@ namespace grabin_test
 
     // Получение приозвольных значений
     // @todo Задокументировать неполноту
-    template <class T>
+    template <class T, class SFINAE = void>
     struct Arbitrary;
 
     // Вспомогательные возможности для Arbitrary
@@ -129,14 +129,15 @@ namespace grabin_test
     };
 
     // Специализации Arbitrary
-    template <>
-    struct Arbitrary<int>
-     : ArbitraryInteger<int>
+    // @todo Специализации для bool и типов символов
+    template <class T>
+    struct Arbitrary<T, std::enable_if_t<std::is_integral<T>::value>>
+     : ArbitraryInteger<T>
     {};
 
-    template <>
-    struct Arbitrary<double>
-     : ArbitraryReal<double>
+    template <class T>
+    struct Arbitrary<T, std::enable_if_t<std::is_floating_point<T>::value>>
+     : ArbitraryReal<T>
     {};
 
     template <class... Types>
