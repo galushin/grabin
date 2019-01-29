@@ -1,0 +1,375 @@
+/* (c) 2018 Галушин Павел Викторович, galushin@gmail.com
+
+Данный файл -- часть библиотеки Grabin.
+
+Grabin -- это свободной программное обеспечение: вы можете перераспространять ее и/или изменять ее
+на условиях Стандартной общественной лицензии GNU в том виде, в каком она была опубликована Фондом
+свободного программного обеспечения; либо версии 3 лицензии, либо (по вашему выбору) любой более
+поздней версии.
+
+Это программное обеспечение распространяется в надежде, что оно будет полезной, но БЕЗО ВСЯКИХ
+ГАРАНТИЙ; даже без неявной гарантии ТОВАРНОГО ВИДА или ПРИГОДНОСТИ ДЛЯ ОПРЕДЕЛЕННЫХ ЦЕЛЕЙ.
+Подробнее см. в Стандартной общественной лицензии GNU.
+
+Вы должны были получить копию Стандартной общественной лицензии GNU вместе с этим программным
+обеспечение. Если это не так, см. https://www.gnu.org/licenses/.
+*/
+
+#ifndef Z_GRABIN_MATH_MATH_VECTOR_HPP_INCLUDED
+#define Z_GRABIN_MATH_MATH_VECTOR_HPP_INCLUDED
+
+/** @file grabin/math/math_vector.hpp
+ @brief Класс для представления математической концепции вектора с линейными
+ операциями.
+*/
+
+#include <cassert>
+#include <cstddef>
+#include <stdexcept>
+#include <vector>
+
+namespace grabin
+{
+inline namespace v1
+{
+    /** @brief Стратегия проверок для шаблона класса @c math_vector, которая при
+    обнаружении ошибок порождает исключения.
+    */
+    struct math_vector_throws_check_policy
+    {
+        /** @brief Обеспечение совпадения размерностей
+        @param x, y векторы, размерности которых должны совпадать
+        @throw std::logic_error, если равенство <tt>x.dim() == y.dim()</tt> не
+        выполняется
+        */
+        template <class T>
+        static void ensure_equal_dimensions(T const & x, T const & y)
+        {
+            if(x.dim() != y.dim())
+            {
+                // @todo Более подробная информация об ошибке
+                throw std::logic_error("Dimensions must be equal");
+            }
+        }
+
+        /** @brief Обеспечение корректности индекса
+        @param x вектор
+        @param index индекс
+        @throw std::out_of_range, если @c index не принадлежит интервалу
+        <tt>[0;x.dim())</tt>
+        */
+        template <class Vector>
+        static void check_index(Vector const & x,
+                                typename Vector::size_type index)
+        {
+            if(index < 0 || x.dim() <= index)
+            {
+                // @todo Более подробная информация об ошибке
+                throw std::out_of_range("Invalid index");
+            }
+        }
+    };
+
+    /** @brief Стратегия проверок для шаблона класса @c math_vector, которая не
+    выполняется никаких проверок.
+    */
+    struct math_vector_no_checks_policy
+    {
+        /** @brief Обеспечение совпадения размерностей
+        @param x, y векторы, размерности которых должны совпадать
+        */
+        template <class T>
+        static void ensure_equal_dimensions(T const &, T const &)
+        {}
+
+        /** @brief Обеспечение корректности индекса
+        @param x вектор
+        @param index индекс
+        */
+        template <class Vector>
+        static void check_index(Vector const &, typename Vector::size_type)
+        {}
+    };
+
+    /** @brief Математический вектор
+    @tparam T тип элементов
+    @tparam CheckPolicy стратегия проверок и обработки ошибок
+
+    Первоночально была идея запретить конструктор без аргументов и вообще
+    векторы нулевой размерности. Но тогда возникает вопрос: в каком состоянии
+    находится вектор, содержимое которого было перемещено? Так как перемщеение
+    является важной современной техникой оптимизации, запрещать его было бы не
+    целесообразно. Поэтому было решено добавить конструктор без аругментов,
+    создающий вектор нулевой размерности.
+    */
+    template <class T, class CheckPolicy = math_vector_throws_check_policy>
+    class math_vector
+    {
+        using Container = std::vector<T>;
+
+    public:
+        // Типы
+        /// @brief Тип элементов
+        using value_type = T;
+
+        /// @brief Тип для представления размера и индексов
+        using size_type = typename Container::difference_type;
+
+        /// @brief Тип неконстантного итератора
+        using iterator = typename Container::iterator;
+
+        /// @brief Тип константного итератора
+        using const_iterator = typename Container::const_iterator;
+
+        /// @brief Стратегия проверок и обработки ошибок
+        using check_policy = CheckPolicy;
+
+        // Создание, копирование, уничтожение
+        /** @brief Конструктор по-умолчанию
+        @brief <tt>this->dim() == 0</tt>
+        */
+        math_vector() = default;
+
+        /** @brief Конструктор с явным указанием размерности
+        @param dim размерность вектора
+        @post <tt> this->dim() == dim </tt>
+        */
+        explicit math_vector(size_type dim)
+         : data_(dim)
+        {}
+
+        /** @brief Конструктор на основе интервала значений
+        @param values интервал значений
+        @post <tt> this->dim() == (values.end() - values.begin())</tt>
+        @post Элементы <tt>*this</tt> равны соответствующим элементам @c values
+        @todo Использовать begin/end, не являющиеся функциями-членами
+        @todo Более качественное ограничение типа шаблонного параметра
+        */
+        template <class Range, class = decltype(std::declval<Range&>().begin())>
+        explicit math_vector(Range const & values)
+         : data_(values.begin(), values.end())
+        {}
+
+        /// @brief Конструктор копий
+        math_vector(math_vector const &) = default;
+        math_vector(math_vector &&) = default;
+
+        /** @brief Конструктор на основе списка инициализации
+        @param values список значений
+        @post <tt>this->dim() == values.size()</tt>
+        @post Элементы <tt>*this</tt> равны соответствующим элементам @c values
+        */
+        math_vector(std::initializer_list<value_type> values)
+         : data_(values.begin(), values.end())
+        {}
+
+        /// @brief Оператор присваивания
+        math_vector & operator=(math_vector const &) = default;
+        math_vector & operator=(math_vector &&) = default;
+
+        // Размер
+        // @todo Свободная фукнция dim?
+        /** @brief Размерность вектора
+        @return Размерность вектора, заданная конструктором или последним
+        присваиванием
+        */
+        size_type dim() const
+        {
+            return this->data_.size();
+        }
+
+        // Доступ к данным
+        //@{
+        /** @brief Индексированный доступ к данным
+        @param index индекс элемента
+        @return Ссылка на элемент с индексом @c index
+        @throw То же, что <tt>check::check_index(*this, index)</tt>
+        */
+        value_type & operator[](size_type index)
+        {
+            // @todo Использовать (самодельный) as_const
+            return const_cast<value_type&>(static_cast<math_vector const &>(*this)[index]);
+        }
+
+        value_type const & operator[](size_type index) const
+        {
+            check_policy::check_index(*this, index);
+
+            return this->data_[index];
+        }
+        //@}
+
+        //@{
+        /** @brief Индексированный доступ к данным c проверкой индекса
+        @param index индекс элемента
+        @return Ссылка на элемент с индексом @c index
+        std::out_of_range, если @c index не принадлежит интервалу
+        <tt>[0;x.dim())</tt>
+        */
+        value_type & at(size_type index)
+        {
+            // @todo Использовать (самодельный) as_const
+            return const_cast<value_type&>(static_cast<math_vector const &>(*this).at(index));
+        }
+
+        value_type const & at(size_type index) const
+        {
+            if(index < 0 || this->dim() <= index)
+            {
+                // @todo Более подробная информация об ошибке
+                throw std::out_of_range("math_vector::at - Invalid index");
+            }
+
+            return this->data_[index];
+        }
+        //@}
+
+        // Итераторы
+        // @todo Упрощение определения пар константных/неконстантных операций
+        //@{
+        /// @brief Итератор начала последовательности элементов
+        iterator begin()
+        {
+            return this->data_.begin();
+        }
+
+        const_iterator begin() const
+        {
+            return this->data_.begin();
+        }
+        //@}
+
+        //@{
+        /// @brief Итератор конца последовательности элементов
+        iterator end()
+        {
+            return this->data_.end();
+        }
+
+        const_iterator end() const
+        {
+            return this->data_.end();
+        }
+        //@}
+
+        // @todo cbegin/cend
+
+        // Линейные операции
+        /** @brief Умножение вектора на скаляр
+        @param a скаляр
+        @return <tt> *this </tt>
+        @post Каждый элемент <tt>*this</tt> умножается на @c a
+        */
+        math_vector & operator*=(value_type const & a)
+        {
+            for(auto & elem : *this)
+            {
+                elem *= a;
+            }
+            return *this;
+        }
+
+        /** @brief Прибавление вектора
+        @param x вектор
+        @pre <tt>x.dim() == this->dim()</tt>
+        @return <tt>*this</tt>
+        @post К каждому элементу <tt>*this</tt> прибавляется соответствующий
+        элемент @c x
+        @throws То же, что <tt>check_policy::ensure_equal_dimensions(*this, x)</tt>
+        */
+        math_vector & operator+=(math_vector const & x)
+        {
+            check_policy::ensure_equal_dimensions(*this, x);
+
+            assert(x.dim() == this->dim());
+
+            for(auto i = this->begin(); i != this->end(); ++ i)
+            {
+                *i += *(x.begin() + (i - this->begin()));
+            }
+
+            return *this;
+        }
+
+    private:
+        Container data_;
+    };
+
+    // Равенство и неравенство
+    // @todo Автоматизация определения оператора ==
+    /** @brief Оператор "равно"
+    @param x,y аргументы
+    @return <tt> std::equal(x.begin(), x.end(), y.begin(), y.end()) </tt>
+    */
+    template <class T, class Check>
+    bool operator==(math_vector<T, Check> const & x,
+                    math_vector<T, Check> const & y)
+    {
+        return std::equal(x.begin(), x.end(), y.begin(), y.end());
+    }
+
+    // @todo Автоматизация определения оператора !=
+    /** @brief Оператор "не равно"
+    @param x,y аргументы
+    @return <tt> !(x == y) </tt>
+    */
+    template <class T, class Check>
+    bool operator!=(math_vector<T, Check> const & x,
+                    math_vector<T, Check> const & y)
+    {
+        return !(x == y);
+    }
+
+    // Линейные операции
+    //@{
+    /** @brief Умножение вектора на скаляр
+    @param x вектор
+    @param a скаляр
+    @return Вектор, размерность которого равна размерности @c x, а элементы
+    равны соответствующим элементам вектора @c x, умноженным на скаляр @c a
+    @todo Смешанные типы аргументов
+    @todo Автоматизация определения этого оператора
+    */
+    template <class T, class Check>
+    math_vector<T, Check>
+    operator*(math_vector<T, Check> x,
+              typename math_vector<T, Check>::value_type const & a)
+    {
+        x *= a;
+        return x;
+    }
+
+    template <class T, class Check>
+    math_vector<T, Check>
+    operator*(typename math_vector<T, Check>::value_type const & a,
+              math_vector<T, Check> const & x)
+    {
+        // @todo Что если умножение скаляров не коммутативно
+        return x * a;
+    }
+    //@}
+
+    /** @brief Оператор сложения двух векторов
+    @param x, y операнды
+    @pre <tt>x.dim() == y.dim()</tt>
+    @todo Автоматизация определения этого оператора
+    @todo Оптимизация для случаев, когда один из аргументов является rvalue
+    @return Вектор, размерность которого равна размерности операндов, а элементы
+    равны сумме соответствующих элементов операндов.
+    @throw То же, что <tt> Check::ensure_equal_dimensions(*this, x) </tt>
+    */
+    template <class T, class Check>
+    math_vector<T, Check>
+    operator+(math_vector<T, Check> x, math_vector<T, Check> const & y)
+    {
+        x += y;
+        return x;
+    }
+}
+// namespace v1
+}
+// namespace grabin
+
+
+#endif
+// Z_GRABIN_MATH_MATH_VECTOR_HPP_INCLUDED

@@ -27,10 +27,17 @@ Grabin -- это свободной программное обеспечени�
 
 namespace grabin_test
 {
+    // Генератор случайных чисел
     using Random_engine = std::mt19937;
 
     Random_engine & random_engine();
 
+    // Получение приозвольных значений
+    // @todo Задокументировать неполноту
+    template <class T, class SFINAE = void>
+    struct Arbitrary;
+
+    // Вспомогательные возможности для Arbitrary
     template <class RealType>
     struct ArbitraryReal
     {
@@ -92,19 +99,45 @@ namespace grabin_test
         }
     };
 
+    template <class Container>
+    struct ArbitraryContainer;
 
-    // @todo Задокументировать неполноту
+    template <class T, class A>
+    struct ArbitraryContainer<std::vector<T, A>>
+    {
+        using value_type = std::vector<T, A>;
+
+        template <class Engine>
+        static value_type generate(Engine & rnd, size_t generation)
+        {
+            std::uniform_int_distribution<typename value_type::size_type>
+                distr(0, generation);
+            auto const n = distr(rnd);
+
+            if(n == 0)
+            {
+                return {};
+            }
+
+            value_type result;
+            result.reserve(n);
+            std::generate_n(std::back_inserter(result), n,
+                            [&]{ return Arbitrary<T>::generate(rnd, distr(rnd));});
+
+            return result;
+        }
+    };
+
+    // Специализации Arbitrary
+    // @todo Специализации для bool и типов символов
     template <class T>
-    struct Arbitrary;
-
-    template <>
-    struct Arbitrary<int>
-     : ArbitraryInteger<int>
+    struct Arbitrary<T, std::enable_if_t<std::is_integral<T>::value>>
+     : ArbitraryInteger<T>
     {};
 
-    template <>
-    struct Arbitrary<double>
-     : ArbitraryReal<double>
+    template <class T>
+    struct Arbitrary<T, std::enable_if_t<std::is_floating_point<T>::value>>
+     : ArbitraryReal<T>
     {};
 
     template <class... Types>
@@ -119,6 +152,13 @@ namespace grabin_test
         }
     };
 
+    // @todo Можно ли написать одну специализацию для всех контейнеров
+    template <class T, class A>
+    struct Arbitrary<std::vector<T, A>>
+     : ArbitraryContainer<std::vector<T, A>>
+    {};
+
+    // Проверка свойств
     namespace detail
     {
         template <class F, class Tuple, std::size_t... I>
@@ -143,6 +183,7 @@ namespace grabin_test
         template <class R, class... Args>
         void check_impl(R(property)(Args...))
         {
+            // @todo Проверить типы: недопустима передача параметра по неконстантной ссылке
             using Value = std::tuple<std::remove_cv_t<std::remove_reference_t<Args>>...>;
             auto & rnd = grabin_test::random_engine();
 
@@ -151,6 +192,7 @@ namespace grabin_test
                 auto args = grabin_test::Arbitrary<Value>::generate(rnd, generation);
 
                 // @todo Анализировать возвращаемое значение?
+                // @todo Поддержка предусловий: возможность запросить ещё значения без увеличиения generation
                 grabin_test::apply(property, args);
             }
         }
