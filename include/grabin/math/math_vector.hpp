@@ -23,6 +23,8 @@ Grabin -- это свободной программное обеспечени�
  операциями.
 */
 
+#include <grabin/utility/as_const.hpp>
+
 #include <cassert>
 #include <cstddef>
 #include <stdexcept>
@@ -187,8 +189,7 @@ inline namespace v1
         */
         value_type & operator[](size_type index)
         {
-            // @todo Использовать (самодельный) as_const
-            return const_cast<value_type&>(static_cast<math_vector const &>(*this)[index]);
+            return const_cast<value_type&>(grabin::as_const(*this)[index]);
         }
 
         value_type const & operator[](size_type index) const
@@ -208,8 +209,7 @@ inline namespace v1
         */
         value_type & at(size_type index)
         {
-            // @todo Использовать (самодельный) as_const
-            return const_cast<value_type&>(static_cast<math_vector const &>(*this).at(index));
+            return const_cast<value_type&>(grabin::as_const(*this).at(index));
         }
 
         value_type const & at(size_type index) const
