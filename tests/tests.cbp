@@ -39,6 +39,7 @@
 		<Unit filename="../include/grabin/statistics/linear_regression.hpp" />
 		<Unit filename="../include/grabin/statistics/mean.hpp" />
 		<Unit filename="../include/grabin/statistics/variance.hpp" />
+		<Unit filename="../include/grabin/utility/as_const.hpp" />
 		<Unit filename="grabin_test.cpp" />
 		<Unit filename="grabin_test.hpp" />
 		<Unit filename="main.cpp" />
@@ -46,6 +47,7 @@
 		<Unit filename="statistics/linear_regression.cpp" />
 		<Unit filename="statistics/mean.cpp" />
 		<Unit filename="statistics/variance.cpp" />
+		<Unit filename="utility/as_const.cpp" />
 		<Extensions>
 			<code_completion />
 			<envvars />
