@@ -32,9 +32,9 @@ OBJDIR_RELEASE = ./obj/Release
 DEP_RELEASE = 
 OUT_RELEASE = ./bin/Release/tests
 
-OBJ_DEBUG = $(OBJDIR_DEBUG)/grabin_test.o $(OBJDIR_DEBUG)/main.o $(OBJDIR_DEBUG)/math/math_vector.o $(OBJDIR_DEBUG)/statistics/linear_regression.o $(OBJDIR_DEBUG)/statistics/mean.o $(OBJDIR_DEBUG)/statistics/variance.o
+OBJ_DEBUG = $(OBJDIR_DEBUG)/grabin_test.o $(OBJDIR_DEBUG)/main.o $(OBJDIR_DEBUG)/math/math_vector.o $(OBJDIR_DEBUG)/statistics/linear_regression.o $(OBJDIR_DEBUG)/statistics/mean.o $(OBJDIR_DEBUG)/statistics/variance.o $(OBJDIR_DEBUG)/utility/as_const.o
 
-OBJ_RELEASE = $(OBJDIR_RELEASE)/grabin_test.o $(OBJDIR_RELEASE)/main.o $(OBJDIR_RELEASE)/math/math_vector.o $(OBJDIR_RELEASE)/statistics/linear_regression.o $(OBJDIR_RELEASE)/statistics/mean.o $(OBJDIR_RELEASE)/statistics/variance.o
+OBJ_RELEASE = $(OBJDIR_RELEASE)/grabin_test.o $(OBJDIR_RELEASE)/main.o $(OBJDIR_RELEASE)/math/math_vector.o $(OBJDIR_RELEASE)/statistics/linear_regression.o $(OBJDIR_RELEASE)/statistics/mean.o $(OBJDIR_RELEASE)/statistics/variance.o $(OBJDIR_RELEASE)/utility/as_const.o
 
 all: debug release
 
@@ -45,6 +45,7 @@ before_debug:
 	test -d $(OBJDIR_DEBUG) || mkdir -p $(OBJDIR_DEBUG)
 	test -d $(OBJDIR_DEBUG)/math || mkdir -p $(OBJDIR_DEBUG)/math
 	test -d $(OBJDIR_DEBUG)/statistics || mkdir -p $(OBJDIR_DEBUG)/statistics
+	test -d $(OBJDIR_DEBUG)/utility || mkdir -p $(OBJDIR_DEBUG)/utility
 
 after_debug: 
 
@@ -71,18 +72,23 @@ $(OBJDIR_DEBUG)/statistics/mean.o: statistics/mean.cpp
 $(OBJDIR_DEBUG)/statistics/variance.o: statistics/variance.cpp
 	$(CXX) $(CFLAGS_DEBUG) $(INC_DEBUG) -c statistics/variance.cpp -o $(OBJDIR_DEBUG)/statistics/variance.o
 
+$(OBJDIR_DEBUG)/utility/as_const.o: utility/as_const.cpp
+	$(CXX) $(CFLAGS_DEBUG) $(INC_DEBUG) -c utility/as_const.cpp -o $(OBJDIR_DEBUG)/utility/as_const.o
+
 clean_debug: 
 	rm -f $(OBJ_DEBUG) $(OUT_DEBUG)
 	rm -rf ./bin/Debug
 	rm -rf $(OBJDIR_DEBUG)
 	rm -rf $(OBJDIR_DEBUG)/math
 	rm -rf $(OBJDIR_DEBUG)/statistics
+	rm -rf $(OBJDIR_DEBUG)/utility
 
 before_release: 
 	test -d ./bin/Release || mkdir -p ./bin/Release
 	test -d $(OBJDIR_RELEASE) || mkdir -p $(OBJDIR_RELEASE)
 	test -d $(OBJDIR_RELEASE)/math || mkdir -p $(OBJDIR_RELEASE)/math
 	test -d $(OBJDIR_RELEASE)/statistics || mkdir -p $(OBJDIR_RELEASE)/statistics
+	test -d $(OBJDIR_RELEASE)/utility || mkdir -p $(OBJDIR_RELEASE)/utility
 
 after_release: 
 
@@ -109,12 +115,16 @@ $(OBJDIR_RELEASE)/statistics/mean.o: statistics/mean.cpp
 $(OBJDIR_RELEASE)/statistics/variance.o: statistics/variance.cpp
 	$(CXX) $(CFLAGS_RELEASE) $(INC_RELEASE) -c statistics/variance.cpp -o $(OBJDIR_RELEASE)/statistics/variance.o
 
+$(OBJDIR_RELEASE)/utility/as_const.o: utility/as_const.cpp
+	$(CXX) $(CFLAGS_RELEASE) $(INC_RELEASE) -c utility/as_const.cpp -o $(OBJDIR_RELEASE)/utility/as_const.o
+
 clean_release: 
 	rm -f $(OBJ_RELEASE) $(OUT_RELEASE)
 	rm -rf ./bin/Release
 	rm -rf $(OBJDIR_RELEASE)
 	rm -rf $(OBJDIR_RELEASE)/math
 	rm -rf $(OBJDIR_RELEASE)/statistics
+	rm -rf $(OBJDIR_RELEASE)/utility
 
 .PHONY: before_debug after_debug clean_debug before_release after_release clean_release
 
