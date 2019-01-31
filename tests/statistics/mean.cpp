@@ -148,7 +148,6 @@ TEST_CASE("mean_accumulator : integer arithmetic progression")
 
 #include <grabin/math/math_vector.hpp>
 
-// @todo Аналогичный тест для целочисленных векторов
 TEST_CASE("mean_accumulator : two math_vectorS")
 {
     using Element = double;
@@ -185,7 +184,72 @@ TEST_CASE("mean_accumulator : two math_vectorS")
 
         auto const avg2 = value_1 + (value_2 - value_1) / 2;
         REQUIRE(acc.count() == 2);
+        REQUIRE(acc.mean().dim() == avg2.dim());
+        for(auto i = 0*acc.mean().dim(); i < acc.mean().dim(); ++ i)
+        {
+            REQUIRE_THAT(acc.mean()[i], Catch::Matchers::WithinAbs(avg2[i], 1e-10));
+        }
+    };
+
+    for(auto generation = 0; generation < 100; ++ generation)
+    {
+        auto & rnd = grabin_test::random_engine();
+        auto gen = [&]
+        {
+            auto const g = std::uniform_int_distribution<int>(0, generation)(rnd);
+            return grabin_test::Arbitrary<Element>::generate(rnd, g);
+        };
+
+        grabin::math_vector<Element> xs(generation+1);
+        std::generate(xs.begin(), xs.end(), gen);
+
+        grabin::math_vector<Element> ys(generation+1);
+        std::generate(ys.begin(), ys.end(), gen);
+
+        property(xs, ys);
+    }
+}
+
+TEST_CASE("mean_accumulator : two math_vector<int>S")
+{
+    using Element = int;
+    using Value = grabin::math_vector<Element>;
+
+    auto property = [](Value const & value_1, Value const & value_2)
+    {
+        CAPTURE(value_1, value_2);
+
+        auto const zero = Value(value_1.dim());
+        grabin::statistics::mean_accumulator<Value> acc(zero);
+
+        using Mean = grabin::math_vector<double>;
+        static_assert(std::is_same<decltype(acc)::count_type, std::ptrdiff_t>::value, "");
+        static_assert(std::is_same<decltype(acc)::value_type, Value>::value, "");
+        static_assert(std::is_same<decltype(acc)::mean_type, Mean>::value, "");
+
+        REQUIRE(acc.count() == 0);
         REQUIRE(acc.mean().dim() == value_1.dim());
+        for(auto i = 0*acc.mean().dim(); i < acc.mean().dim(); ++ i)
+        {
+            REQUIRE_THAT(acc.mean()[i], Catch::Matchers::WithinAbs(0.0, 1e-10));
+        }
+
+        acc(value_1);
+
+        static_assert(std::is_same<decltype(acc(value_1)), decltype(acc) &>::value, "");
+
+        REQUIRE(acc.count() == 1);
+        REQUIRE(acc.mean().dim() == value_1.dim());
+        for(auto i = 0*acc.mean().dim(); i < acc.mean().dim(); ++ i)
+        {
+            REQUIRE_THAT(acc.mean()[i], Catch::Matchers::WithinAbs(value_1[i], 1e-10));
+        }
+
+        acc(value_2);
+
+        REQUIRE(acc.count() == 2);
+        auto const avg2 = value_1 + (value_2 - Mean(value_1)) / 2;
+        REQUIRE(acc.mean().dim() == avg2.dim());
         for(auto i = 0*acc.mean().dim(); i < acc.mean().dim(); ++ i)
         {
             REQUIRE_THAT(acc.mean()[i], Catch::Matchers::WithinAbs(avg2[i], 1e-10));
