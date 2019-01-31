@@ -22,8 +22,9 @@ Grabin -- это свободной программное обеспечени�
  @brief Накопитель для вычисления среднего
 */
 
+#include <grabin/math/average_type.hpp>
+
 #include <cstdint>
-#include <type_traits>
 
 namespace grabin
 {
@@ -31,29 +32,6 @@ inline namespace v1
 {
 namespace statistics
 {
-    /** @brief Класс-характеристика для определения типа среднего значения
-    @tparam T тип элементов
-    @tparam W тип весов
-    */
-    template <class T, class W>
-    struct average_type
-    {
-    private:
-        using R_T = decltype(std::declval<T>() * std::declval<W>() / std::declval<W>());
-        using R_double = decltype(std::declval<double>() * std::declval<T>() / std::declval<W>());
-
-    public:
-        /// @brief Тип среднего значения
-        using type = std::conditional_t<std::is_integral<T>::value, R_double, R_T>;
-    };
-
-    /** @brief Тип-синоним для типа среднего значения
-    @tparam T тип элементов
-    @tparam W тип весов
-    */
-    template <class T, class W>
-    using average_type_t = typename average_type<T, W>::type;
-
     /** @brief Накопитель для вычисления математического ожидания
     @tparam T тип значений, для которых вычисляется среднее
     @tparam Count тип количества элементов
@@ -78,6 +56,15 @@ namespace statistics
         @post <tt> this->mean() == mean_type(0) </tt>
         */
         mean_accumulator() = default;
+
+        /** @brief Конструктор с явным указанием нулевого элемента
+        @post <tt> this->count() == 0 </tt>
+        @post <tt> this->mean() == zero </tt>
+        */
+        explicit mean_accumulator(value_type zero)
+         : count_(0)
+         , mean_(zero)
+        {}
 
         // Свойства
         /** @brief Количество обработанных элементов
@@ -104,7 +91,7 @@ namespace statistics
         mean_accumulator & operator()(value_type const & value)
         {
             ++ this->count_;
-            this->mean_ += (value - this->mean_) / mean_type(this->count_);
+            this->mean_ += (value - this->mean_) / this->count_;
             return *this;
         }
 
