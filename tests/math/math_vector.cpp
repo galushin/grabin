@@ -414,6 +414,75 @@ TEST_CASE("math_vector: multiplication by scalar")
     }
 }
 
+TEST_CASE("math_vector: division by zero")
+{
+    using Value = int;
+    using Vector = grabin::math_vector<Value>;
+
+    auto property = [](Vector const & x)
+    {
+        REQUIRE_THROWS_AS(x / 0, std::logic_error);
+    };
+
+    grabin_test::check(property);
+}
+
+TEST_CASE("math_vector: division by non-zero")
+{
+    using Value = int;
+    using Vector = grabin::math_vector<Value>;
+
+    auto property = [](Vector const & x, Value const & a)
+    {
+        if(a == 0)
+        {
+            return;
+        }
+
+        auto const y1 = [&]()
+        {
+            auto y = x;
+
+            for(auto & e : y)
+            {
+                e /= a;
+            }
+            return y;
+        }();
+
+        auto const y2 = x / a;
+
+        auto const y3 = [&]()
+        {
+            auto y = x;
+            y /= a;
+            return y;
+        }();
+
+        REQUIRE(y1.dim() == x.dim());
+        for(auto i = y1.begin(); i != y1.end(); ++ i)
+        {
+            CHECK(*i == *(x.begin() + (i - y1.begin())) / a);
+        }
+
+        CHECK(y2 == y1);
+        CHECK(y3 == y1);
+    };
+
+    for(auto generation = 0; generation < 100; ++ generation)
+    {
+        auto & rnd = grabin_test::random_engine();
+        std::uniform_int_distribution<Value> distr(-1000, +1000);
+
+        auto const a = distr(rnd);
+
+        grabin::math_vector<Value> xs(generation+1);
+        std::generate(xs.begin(), xs.end(), [&]{ return distr(rnd); });
+
+        property(xs, a);
+    }
+}
+
 TEST_CASE("math_vector: operator plus")
 {
     using Value = int;

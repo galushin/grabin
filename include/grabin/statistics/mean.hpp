@@ -79,6 +79,15 @@ namespace statistics
         */
         mean_accumulator() = default;
 
+        /** @brief Конструктор с явным указанием нулевого элемента
+        @post <tt> this->count() == 0 </tt>
+        @post <tt> this->mean() == zero </tt>
+        */
+        explicit mean_accumulator(value_type zero)
+         : count_(0)
+         , mean_(zero)
+        {}
+
         // Свойства
         /** @brief Количество обработанных элементов
         @return Количество обработанных элементов, равное количеству вызовов <tt>operator()</tt>
@@ -104,7 +113,7 @@ namespace statistics
         mean_accumulator & operator()(value_type const & value)
         {
             ++ this->count_;
-            this->mean_ += (value - this->mean_) / mean_type(this->count_);
+            this->mean_ += (value - this->mean_) / this->count_;
             return *this;
         }
 
