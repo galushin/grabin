@@ -47,16 +47,22 @@ TEST_CASE("math_vector : types and default ctor")
     using Vector = grabin::math_vector<Value>;
 
     // @todo Проверить тип элементов для нескольких разных типов?
-    // @todo Проверить Vector::size_type, а не только факт его наличия
     using Size = Vector::size_type;
 
+    static_assert(std::is_signed<Size>::value, "");
+
+    using Iter = typename Vector::iterator;
     using CIter = typename Vector::const_iterator;
 
+    static_assert(std::is_same<std::iterator_traits<Iter>::iterator_category,
+                               std::random_access_iterator_tag>::value, "");
     static_assert(std::is_same<std::iterator_traits<CIter>::iterator_category,
                                std::random_access_iterator_tag>::value, "");
+
+    static_assert(std::is_same<std::iterator_traits<Iter>::value_type, Value>::value, "");
     static_assert(std::is_same<std::iterator_traits<CIter>::value_type, Value>::value, "");
 
-    Vector x;
+    Vector const x{};
 
     CHECK(x.dim() == 0);
     CHECK(x.begin() == x.end());
@@ -67,17 +73,45 @@ TEST_CASE("math_vector : ctor with size")
     using Value = int;
     using Vector = grabin::math_vector<Value>;
 
-    for(auto n = 1; n < 20; ++ n)
+    auto property = [](int n)
     {
-        Vector x(n);
+        Vector const x(n);
 
         CHECK(x.dim() == n);
-        CHECK(x.end() == x.begin() + n);
 
         for(auto const & elem : x)
         {
             CHECK(elem == Value(0));
         }
+    };
+
+    for(auto n = 1; n < 20; ++ n)
+    {
+        property(n);
+    }
+}
+
+TEST_CASE("math_vector : ctor with size and value")
+{
+    using Value = int;
+    using Vector = grabin::math_vector<Value>;
+
+    auto property = [](int n, Value const & value)
+    {
+        Vector const x(n, value);
+
+        CHECK(x.dim() == n);
+
+        for(auto const & elem : x)
+        {
+            CHECK(elem == value);
+        }
+    };
+
+    for(auto n = 1; n < 20; ++ n)
+    {
+        auto & rnd = grabin_test::random_engine();
+        property(n, grabin_test::Arbitrary<Value>::generate(rnd, n));
     }
 }
 
@@ -116,8 +150,19 @@ TEST_CASE("math_vector : initializer list ctor")
     grabin_test::check(property);
 }
 
-// @todo Конструктор с размером и значением элементов
-// @todo Типы (неконстантных) итераторов и они должны быть произвольного доступа
+TEST_CASE("math_vector : size")
+{
+    using Value = int;
+    using Vector = grabin::math_vector<Value>;
+
+    auto property = [](Vector const & x)
+    {
+        static_assert(std::is_same<decltype(x.size()), Vector::size_type>::value, "");
+        CHECK(x.dim() == x.size());
+    };
+
+    grabin_test::check(property);
+}
 
 TEST_CASE("math_vector : equality")
 {
@@ -187,8 +232,9 @@ TEST_CASE("math_vector: assign")
     using Value = int;
     using Vector = grabin::math_vector<Value>;
 
-    auto property = [](Vector x, Vector const & y)
+    auto property = [](Vector const & x_old, Vector const & y)
     {
+        Vector x = x_old;
         x = y;
 
         CHECK(y == x);
@@ -216,6 +262,23 @@ TEST_CASE("math_vector: move assign")
         CHECK(y.end() == last);
 
         // @todo Что должно быть с x после того, как его содержимое было перемещено?
+    };
+
+    grabin_test::check(property);
+}
+
+TEST_CASE("math_vector: cbegin/cend")
+{
+    using Value = int;
+    using Vector = grabin::math_vector<Value>;
+
+    auto property = [](Vector x)
+    {
+        static_assert(std::is_same<decltype(x.cbegin()), Vector::const_iterator>::value, "");
+        static_assert(std::is_same<decltype(x.cend()), Vector::const_iterator>::value, "");
+
+        CHECK(x.cbegin() == x.begin());
+        CHECK(x.cend() == x.end());
     };
 
     grabin_test::check(property);

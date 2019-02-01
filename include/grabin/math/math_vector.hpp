@@ -150,9 +150,20 @@ inline namespace v1
         /** @brief Конструктор с явным указанием размерности
         @param dim размерность вектора
         @post <tt> this->dim() == dim </tt>
+        @post Все элементы <tt>*this</tt> равны <tt>value_type()</tt>
         */
         explicit math_vector(size_type dim)
          : data_(dim)
+        {}
+
+        /** @brief Конструктор с явным указанием размерности и значения
+        элементов
+        @param dim размерность вектора
+        @post <tt> this->dim() == dim </tt>
+        @post Все элементы <tt>*this</tt> равны @c value
+        */
+        math_vector(size_type dim, value_type const & value)
+         : data_(dim, value)
         {}
 
         /** @brief Конструктор на основе интервала значений
@@ -185,15 +196,22 @@ inline namespace v1
         math_vector & operator=(math_vector &&) = default;
 
         // Размер
-        // @todo Свободная фукнция dim?
+        //@{
         /** @brief Размерность вектора
         @return Размерность вектора, заданная конструктором или последним
         присваиванием
+        @todo Свободная фукнция dim?
         */
         size_type dim() const
         {
+            return this->size();
+        }
+
+        size_type size() const
+        {
             return this->data_.size();
         }
+        //@}
 
         // Доступ к данным
         //@{
@@ -240,7 +258,6 @@ inline namespace v1
         //@}
 
         // Итераторы
-        // @todo Упрощение определения пар константных/неконстантных операций
         //@{
         /// @brief Итератор начала последовательности элементов
         iterator begin()
@@ -251,6 +268,11 @@ inline namespace v1
         const_iterator begin() const
         {
             return this->data_.begin();
+        }
+
+        const_iterator cbegin() const
+        {
+            return this->begin();
         }
         //@}
 
@@ -265,9 +287,12 @@ inline namespace v1
         {
             return this->data_.end();
         }
-        //@}
 
-        // @todo cbegin/cend
+        const_iterator cend() const
+        {
+            return this->end();
+        }
+        //@}
 
         // Линейные операции
         /** @brief Умножение вектора на скаляр
@@ -349,7 +374,6 @@ inline namespace v1
     };
 
     // Равенство и неравенство
-    // @todo Автоматизация определения оператора ==
     /** @brief Оператор "равно"
     @param x,y аргументы
     @return <tt> std::equal(x.begin(), x.end(), y.begin(), y.end()) </tt>
@@ -361,7 +385,6 @@ inline namespace v1
         return std::equal(x.begin(), x.end(), y.begin(), y.end());
     }
 
-    // @todo Автоматизация определения оператора !=
     /** @brief Оператор "не равно"
     @param x,y аргументы
     @return <tt> !(x == y) </tt>
@@ -381,7 +404,6 @@ inline namespace v1
     @return Вектор, размерность которого равна размерности @c x, а элементы
     равны соответствующим элементам вектора @c x, умноженным на скаляр @c a
     @todo Смешанные типы аргументов
-    @todo Автоматизация определения этого оператора
     */
     template <class T, class Check>
     math_vector<T, Check>
@@ -409,7 +431,6 @@ inline namespace v1
     @return Вектор, размерность которого равна размерности @c x, а элементы
     равны соответствующим элементам вектора @c x, делённого на скаляр @c a
     @todo Смешанные типы аргументов
-    @todo Автоматизация определения этого оператора
     */
     template <class T, class Check>
     math_vector<T, Check>
@@ -423,7 +444,6 @@ inline namespace v1
     /** @brief Оператор сложения двух векторов
     @param x, y слагаемые
     @pre <tt>x.dim() == y.dim()</tt>
-    @todo Автоматизация определения этого оператора
     @todo Оптимизация для случаев, когда один из аргументов является rvalue
     @return Вектор, размерность которого равна размерности слагаемых, а элементы
     равны сумме соответствующих элементов слагаемых.
@@ -440,7 +460,6 @@ inline namespace v1
     /** @brief Оператор сложения двух векторов с разными типами элементов
     @param x, y слагаемые
     @pre <tt>x.dim() == y.dim()</tt>
-    @todo Автоматизация определения этого оператора
     @todo Оптимизация для случаев, когда один из аргументов является rvalue
     @todo Разные стратегии проверки у разных векторов
     @return Вектор, размерность которого равна размерности операндов, а элементы
@@ -463,7 +482,6 @@ inline namespace v1
     @param x уменьшаемое
     @param y вычитаемое
     @pre <tt>x.dim() == y.dim()</tt>
-    @todo Автоматизация определения этого оператора
     @todo Оптимизация для случаев, когда один из аргументов является rvalue
     @return Вектор, размерность которого равна размерности операндов, а элементы
     равны разности соответствующих элементов @c x и @c y.
@@ -481,7 +499,6 @@ inline namespace v1
     @param x уменьшаемое
     @param y вычитаемое
     @pre <tt>x.dim() == y.dim()</tt>
-    @todo Автоматизация определения этого оператора
     @todo Оптимизация для случаев, когда один из аргументов является rvalue
     @todo Разные стратегии проверки у разных векторов
     @return Вектор, размерность которого равна размерности операндов, а элементы
