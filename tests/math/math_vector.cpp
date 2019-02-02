@@ -20,7 +20,6 @@ Grabin -- это свободной программное обеспечени�
 #include <catch2/catch.hpp>
 #include "../grabin_test.hpp"
 
-// @todo Перенести в ../grabin_test.hpp ?
 namespace grabin_test
 {
     template <class T, class Check>
@@ -29,7 +28,7 @@ namespace grabin_test
         using value_type = grabin::math_vector<T, Check>;
 
         template <class Engine>
-        static value_type generate(Engine & rnd, size_t generation)
+        static value_type generate(Engine & rnd, generation_t generation)
         {
             using Vec = std::vector<typename value_type::value_type>;
 
@@ -38,8 +37,6 @@ namespace grabin_test
     };
 }
 // namespace grabin_test
-
-// @todo Поддержка вывода на экран в Catch2
 
 TEST_CASE("math_vector : types and default ctor")
 {
@@ -73,7 +70,7 @@ TEST_CASE("math_vector : ctor with size")
     using Value = int;
     using Vector = grabin::math_vector<Value>;
 
-    auto property = [](int n)
+    auto property = [](grabin_test::container_size<int> n)
     {
         Vector const x(n);
 
@@ -85,10 +82,7 @@ TEST_CASE("math_vector : ctor with size")
         }
     };
 
-    for(auto n = 1; n < 20; ++ n)
-    {
-        property(n);
-    }
+    grabin_test::check(property);
 }
 
 TEST_CASE("math_vector : ctor with size and value")
@@ -96,7 +90,7 @@ TEST_CASE("math_vector : ctor with size and value")
     using Value = int;
     using Vector = grabin::math_vector<Value>;
 
-    auto property = [](int n, Value const & value)
+    auto property = [](grabin_test::container_size<int> n, Value const & value)
     {
         Vector const x(n, value);
 
@@ -108,11 +102,7 @@ TEST_CASE("math_vector : ctor with size and value")
         }
     };
 
-    for(auto n = 1; n < 20; ++ n)
-    {
-        auto & rnd = grabin_test::random_engine();
-        property(n, grabin_test::Arbitrary<Value>::generate(rnd, n));
-    }
+    grabin_test::check(property);
 }
 
 TEST_CASE("math_vector : range ctor")
@@ -348,7 +338,7 @@ TEST_CASE("math_vector: non-const indexing")
                       [&]{ return grabin_test::Arbitrary<Value>::generate(rnd, distr(rnd)); });
 
         auto const value = grabin_test::Arbitrary<Value>::generate(rnd, generation);
-        auto const index = std::uniform_int_distribution<Value>(0, xs.dim()-1)(rnd);
+        auto const index = std::uniform_int_distribution<Vector::size_type>(0, xs.dim()-1)(rnd);
 
         property(xs, index, value);
     }
@@ -416,8 +406,8 @@ TEST_CASE("math_vector: non-const at")
         std::generate(xs.begin(), xs.end(),
                       [&]{ return grabin_test::Arbitrary<Value>::generate(rnd, distr(rnd)); });
 
-        auto const value = grabin_test::Arbitrary<Vector::size_type>::generate(rnd, generation);
-        auto const index = std::uniform_int_distribution<Value>(0, xs.dim()-1)(rnd);
+        auto const value = grabin_test::Arbitrary<Value>::generate(rnd, generation);
+        auto const index = std::uniform_int_distribution<Vector::size_type>(0, xs.dim()-1)(rnd);
 
         property(xs, index, value);
     }
@@ -453,9 +443,9 @@ TEST_CASE("math_vector: multiplication by scalar")
         }();
 
         REQUIRE(y1.dim() == x.dim());
-        for(auto i = y1.begin(); i != y1.end(); ++ i)
+        for(auto i = 0*y1.dim(); i < y1.dim(); ++ i)
         {
-            CHECK(*i == a * *(x.begin() + (i - y1.begin())));
+            CHECK(y1[i] == a * x[i]);
         }
 
         CHECK(y2 == y1);
@@ -576,13 +566,9 @@ TEST_CASE("math_vector: operator plus")
         }();
 
         REQUIRE(z1.dim() == x.dim());
-        for(auto i = z1.begin(); i != z1.end(); ++ i)
+        for(auto i = 0*z1.dim(); i < z1.dim(); ++ i)
         {
-            auto const expected
-                = *(x.begin() + (i - z1.begin()))
-                + *(y.begin() + (i - z1.begin()));
-
-            CHECK(*i == expected);
+            CHECK(z1[i] == x[i] + y[i]);
         }
 
         CHECK(z2 == z1);

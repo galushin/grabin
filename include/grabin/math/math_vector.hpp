@@ -50,7 +50,6 @@ inline namespace v1
         {
             if(x.dim() != y.dim())
             {
-                // @todo Более подробная информация об ошибке
                 throw std::logic_error("Dimensions must be equal");
             }
         }
@@ -67,7 +66,6 @@ inline namespace v1
         {
             if(index < 0 || x.dim() <= index)
             {
-                // @todo Более подробная информация об ошибке
                 throw std::out_of_range("Invalid index");
             }
         }
@@ -75,6 +73,7 @@ inline namespace v1
         template <class Scalar>
         static void check_division_by_zero(Scalar const & value)
         {
+            // @todo Правильно ли это для числе с плавающей точкой?
             if(value == Scalar(0))
             {
                 throw std::logic_error("Division by zero");
@@ -117,7 +116,6 @@ inline namespace v1
     является важной современной техникой оптимизации, запрещать его было бы не
     целесообразно. Поэтому было решено добавить конструктор без аругментов,
     создающий вектор нулевой размерности.
-    @todo Линейные операции со смешанными типами
     */
     template <class T, class CheckPolicy = math_vector_throws_check_policy>
     class math_vector
@@ -170,8 +168,6 @@ inline namespace v1
         @param values интервал значений
         @post <tt> this->dim() == (values.end() - values.begin())</tt>
         @post Элементы <tt>*this</tt> равны соответствующим элементам @c values
-        @todo Использовать begin/end, не являющиеся функциями-членами
-        @todo Более качественное ограничение типа шаблонного параметра
         */
         template <class Range, class = decltype(std::declval<Range&>().begin())>
         explicit math_vector(Range const & values)
@@ -193,6 +189,8 @@ inline namespace v1
 
         /// @brief Оператор присваивания
         math_vector & operator=(math_vector const &) = default;
+
+        /// @brief Оператор присваивания с перемещением
         math_vector & operator=(math_vector &&) = default;
 
         // Размер
@@ -200,7 +198,6 @@ inline namespace v1
         /** @brief Размерность вектора
         @return Размерность вектора, заданная конструктором или последним
         присваиванием
-        @todo Свободная фукнция dim?
         */
         size_type dim() const
         {
@@ -249,7 +246,6 @@ inline namespace v1
         {
             if(index < 0 || this->dim() <= index)
             {
-                // @todo Более подробная информация об ошибке
                 throw std::out_of_range("math_vector::at - Invalid index");
             }
 
@@ -403,7 +399,6 @@ inline namespace v1
     @param a скаляр
     @return Вектор, размерность которого равна размерности @c x, а элементы
     равны соответствующим элементам вектора @c x, умноженным на скаляр @c a
-    @todo Смешанные типы аргументов
     */
     template <class T, class Check>
     math_vector<T, Check>
@@ -419,7 +414,6 @@ inline namespace v1
     operator*(typename math_vector<T, Check>::value_type const & a,
               math_vector<T, Check> const & x)
     {
-        // @todo Что если умножение скаляров не коммутативно
         return x * a;
     }
     //@}
@@ -430,7 +424,6 @@ inline namespace v1
     @pre <tt>a != 0</tt>
     @return Вектор, размерность которого равна размерности @c x, а элементы
     равны соответствующим элементам вектора @c x, делённого на скаляр @c a
-    @todo Смешанные типы аргументов
     */
     template <class T, class Check>
     math_vector<T, Check>
@@ -444,7 +437,6 @@ inline namespace v1
     /** @brief Оператор сложения двух векторов
     @param x, y слагаемые
     @pre <tt>x.dim() == y.dim()</tt>
-    @todo Оптимизация для случаев, когда один из аргументов является rvalue
     @return Вектор, размерность которого равна размерности слагаемых, а элементы
     равны сумме соответствующих элементов слагаемых.
     @throw То же, что <tt> Check::ensure_equal_dimensions(*this, x) </tt>
@@ -460,8 +452,6 @@ inline namespace v1
     /** @brief Оператор сложения двух векторов с разными типами элементов
     @param x, y слагаемые
     @pre <tt>x.dim() == y.dim()</tt>
-    @todo Оптимизация для случаев, когда один из аргументов является rvalue
-    @todo Разные стратегии проверки у разных векторов
     @return Вектор, размерность которого равна размерности операндов, а элементы
     равны сумме соответствующих элементов @c x и @c y.
     @throw То же, что <tt> Check::ensure_equal_dimensions(*this, x) </tt>
@@ -482,7 +472,6 @@ inline namespace v1
     @param x уменьшаемое
     @param y вычитаемое
     @pre <tt>x.dim() == y.dim()</tt>
-    @todo Оптимизация для случаев, когда один из аргументов является rvalue
     @return Вектор, размерность которого равна размерности операндов, а элементы
     равны разности соответствующих элементов @c x и @c y.
     @throw То же, что <tt> Check::ensure_equal_dimensions(*this, x) </tt>
@@ -499,8 +488,6 @@ inline namespace v1
     @param x уменьшаемое
     @param y вычитаемое
     @pre <tt>x.dim() == y.dim()</tt>
-    @todo Оптимизация для случаев, когда один из аргументов является rvalue
-    @todo Разные стратегии проверки у разных векторов
     @return Вектор, размерность которого равна размерности операндов, а элементы
     равны разности соответствующих элементов @c x и @c y.
     @throw То же, что <tt> Check::ensure_equal_dimensions(*this, x) </tt>
@@ -522,7 +509,6 @@ inline namespace v1
     @tparam T тип элементов
     @tparam Check тип стратегии проверок
     @tparam W тип весов
-    @todo Может быть достичь того же самого за счёт определения оператора /?
     */
     template <class T, class Check, class W>
     struct average_type<math_vector<T, Check>, W>
