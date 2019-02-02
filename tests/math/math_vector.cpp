@@ -20,7 +20,6 @@ Grabin -- это свободной программное обеспечени�
 #include <catch2/catch.hpp>
 #include "../grabin_test.hpp"
 
-// @todo Перенести в ../grabin_test.hpp ?
 namespace grabin_test
 {
     template <class T, class Check>
@@ -29,7 +28,7 @@ namespace grabin_test
         using value_type = grabin::math_vector<T, Check>;
 
         template <class Engine>
-        static value_type generate(Engine & rnd, size_t generation)
+        static value_type generate(Engine & rnd, generation_t generation)
         {
             using Vec = std::vector<typename value_type::value_type>;
 
@@ -39,24 +38,28 @@ namespace grabin_test
 }
 // namespace grabin_test
 
-// @todo Поддержка вывода на экран в Catch2
-
 TEST_CASE("math_vector : types and default ctor")
 {
     using Value = int;
     using Vector = grabin::math_vector<Value>;
 
     // @todo Проверить тип элементов для нескольких разных типов?
-    // @todo Проверить Vector::size_type, а не только факт его наличия
     using Size = Vector::size_type;
 
+    static_assert(std::is_signed<Size>::value, "");
+
+    using Iter = typename Vector::iterator;
     using CIter = typename Vector::const_iterator;
 
+    static_assert(std::is_same<std::iterator_traits<Iter>::iterator_category,
+                               std::random_access_iterator_tag>::value, "");
     static_assert(std::is_same<std::iterator_traits<CIter>::iterator_category,
                                std::random_access_iterator_tag>::value, "");
+
+    static_assert(std::is_same<std::iterator_traits<Iter>::value_type, Value>::value, "");
     static_assert(std::is_same<std::iterator_traits<CIter>::value_type, Value>::value, "");
 
-    Vector x;
+    Vector const x{};
 
     CHECK(x.dim() == 0);
     CHECK(x.begin() == x.end());
@@ -67,18 +70,39 @@ TEST_CASE("math_vector : ctor with size")
     using Value = int;
     using Vector = grabin::math_vector<Value>;
 
-    for(auto n = 1; n < 20; ++ n)
+    auto property = [](grabin_test::container_size<int> n)
     {
-        Vector x(n);
+        Vector const x(n);
 
         CHECK(x.dim() == n);
-        CHECK(x.end() == x.begin() + n);
 
         for(auto const & elem : x)
         {
             CHECK(elem == Value(0));
         }
-    }
+    };
+
+    grabin_test::check(property);
+}
+
+TEST_CASE("math_vector : ctor with size and value")
+{
+    using Value = int;
+    using Vector = grabin::math_vector<Value>;
+
+    auto property = [](grabin_test::container_size<int> n, Value const & value)
+    {
+        Vector const x(n, value);
+
+        CHECK(x.dim() == n);
+
+        for(auto const & elem : x)
+        {
+            CHECK(elem == value);
+        }
+    };
+
+    grabin_test::check(property);
 }
 
 TEST_CASE("math_vector : range ctor")
@@ -116,8 +140,19 @@ TEST_CASE("math_vector : initializer list ctor")
     grabin_test::check(property);
 }
 
-// @todo Конструктор с размером и значением элементов
-// @todo Типы (неконстантных) итераторов и они должны быть произвольного доступа
+TEST_CASE("math_vector : size")
+{
+    using Value = int;
+    using Vector = grabin::math_vector<Value>;
+
+    auto property = [](Vector const & x)
+    {
+        static_assert(std::is_same<decltype(x.size()), Vector::size_type>::value, "");
+        CHECK(x.dim() == x.size());
+    };
+
+    grabin_test::check(property);
+}
 
 TEST_CASE("math_vector : equality")
 {
@@ -187,8 +222,9 @@ TEST_CASE("math_vector: assign")
     using Value = int;
     using Vector = grabin::math_vector<Value>;
 
-    auto property = [](Vector x, Vector const & y)
+    auto property = [](Vector const & x_old, Vector const & y)
     {
+        Vector x = x_old;
         x = y;
 
         CHECK(y == x);
@@ -216,6 +252,23 @@ TEST_CASE("math_vector: move assign")
         CHECK(y.end() == last);
 
         // @todo Что должно быть с x после того, как его содержимое было перемещено?
+    };
+
+    grabin_test::check(property);
+}
+
+TEST_CASE("math_vector: cbegin/cend")
+{
+    using Value = int;
+    using Vector = grabin::math_vector<Value>;
+
+    auto property = [](Vector x)
+    {
+        static_assert(std::is_same<decltype(x.cbegin()), Vector::const_iterator>::value, "");
+        static_assert(std::is_same<decltype(x.cend()), Vector::const_iterator>::value, "");
+
+        CHECK(x.cbegin() == x.begin());
+        CHECK(x.cend() == x.end());
     };
 
     grabin_test::check(property);
@@ -285,7 +338,7 @@ TEST_CASE("math_vector: non-const indexing")
                       [&]{ return grabin_test::Arbitrary<Value>::generate(rnd, distr(rnd)); });
 
         auto const value = grabin_test::Arbitrary<Value>::generate(rnd, generation);
-        auto const index = std::uniform_int_distribution<Value>(0, xs.dim()-1)(rnd);
+        auto const index = std::uniform_int_distribution<Vector::size_type>(0, xs.dim()-1)(rnd);
 
         property(xs, index, value);
     }
@@ -353,8 +406,8 @@ TEST_CASE("math_vector: non-const at")
         std::generate(xs.begin(), xs.end(),
                       [&]{ return grabin_test::Arbitrary<Value>::generate(rnd, distr(rnd)); });
 
-        auto const value = grabin_test::Arbitrary<Vector::size_type>::generate(rnd, generation);
-        auto const index = std::uniform_int_distribution<Value>(0, xs.dim()-1)(rnd);
+        auto const value = grabin_test::Arbitrary<Value>::generate(rnd, generation);
+        auto const index = std::uniform_int_distribution<Vector::size_type>(0, xs.dim()-1)(rnd);
 
         property(xs, index, value);
     }
@@ -390,9 +443,9 @@ TEST_CASE("math_vector: multiplication by scalar")
         }();
 
         REQUIRE(y1.dim() == x.dim());
-        for(auto i = y1.begin(); i != y1.end(); ++ i)
+        for(auto i = 0*y1.dim(); i < y1.dim(); ++ i)
         {
-            CHECK(*i == a * *(x.begin() + (i - y1.begin())));
+            CHECK(y1[i] == a * x[i]);
         }
 
         CHECK(y2 == y1);
@@ -513,13 +566,9 @@ TEST_CASE("math_vector: operator plus")
         }();
 
         REQUIRE(z1.dim() == x.dim());
-        for(auto i = z1.begin(); i != z1.end(); ++ i)
+        for(auto i = 0*z1.dim(); i < z1.dim(); ++ i)
         {
-            auto const expected
-                = *(x.begin() + (i - z1.begin()))
-                + *(y.begin() + (i - z1.begin()));
-
-            CHECK(*i == expected);
+            CHECK(z1[i] == x[i] + y[i]);
         }
 
         CHECK(z2 == z1);

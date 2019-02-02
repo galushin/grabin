@@ -37,6 +37,20 @@ namespace grabin_test
     template <class T, class SFINAE = void>
     struct Arbitrary;
 
+    /// @brief Специальный тип-обёртка для порождения размера контейнеров
+    template <class T>
+    struct container_size
+    {
+        T value;
+
+        operator T const &() const
+        {
+            return this->value;
+        }
+    };
+
+    using generation_t = std::intmax_t;
+
     // Вспомогательные возможности для Arbitrary
     template <class RealType>
     struct ArbitraryReal
@@ -45,7 +59,7 @@ namespace grabin_test
         using value_type = RealType;
 
         template <class Engine>
-        static value_type generate(Engine & rnd, size_t generation)
+        static value_type generate(Engine & rnd, generation_t generation)
         {
             switch(generation)
             {
@@ -77,7 +91,7 @@ namespace grabin_test
         using value_type = IntType;
 
         template <class Engine>
-        static value_type generate(Engine & rnd, size_t generation)
+        static value_type generate(Engine & rnd, generation_t generation)
         {
             switch(generation)
             {
@@ -108,11 +122,10 @@ namespace grabin_test
         using value_type = std::vector<T, A>;
 
         template <class Engine>
-        static value_type generate(Engine & rnd, size_t generation)
+        static value_type generate(Engine & rnd, generation_t generation)
         {
-            std::uniform_int_distribution<typename value_type::size_type>
-                distr(0, generation);
-            auto const n = distr(rnd);
+            using Size = typename value_type::size_type;
+            auto const n = Arbitrary<container_size<Size>>::generate(rnd, generation);
 
             if(n == 0)
             {
@@ -121,6 +134,7 @@ namespace grabin_test
 
             value_type result;
             result.reserve(n);
+            std::uniform_int_distribution<Size> distr(0, generation);
             std::generate_n(std::back_inserter(result), n,
                             [&]{ return Arbitrary<T>::generate(rnd, distr(rnd));});
 
@@ -129,7 +143,6 @@ namespace grabin_test
     };
 
     // Специализации Arbitrary
-    // @todo Специализации для bool и типов символов
     template <class T>
     struct Arbitrary<T, std::enable_if_t<std::is_integral<T>::value>>
      : ArbitraryInteger<T>
@@ -146,13 +159,24 @@ namespace grabin_test
         using value_type = std::tuple<Types...>;
 
         template <class Engine>
-        static value_type generate(Engine & rnd, size_t generation)
+        static value_type generate(Engine & rnd, generation_t generation)
         {
             return value_type(Arbitrary<Types>::generate(rnd, generation)...);
         }
     };
 
-    // @todo Можно ли написать одну специализацию для всех контейнеров
+    template <class T>
+    struct Arbitrary<container_size<T>>
+    {
+        using value_type = container_size<T>;
+
+        template <class Engine>
+        static value_type generate(Engine & rnd, generation_t generation)
+        {
+            return {std::uniform_int_distribution<T>(T(0), static_cast<T>(generation))(rnd)};
+        }
+    };
+
     template <class T, class A>
     struct Arbitrary<std::vector<T, A>>
      : ArbitraryContainer<std::vector<T, A>>
@@ -164,7 +188,6 @@ namespace grabin_test
         template <class F, class Tuple, std::size_t... I>
         constexpr decltype(auto) apply_impl(F&& f, Tuple&& t, std::index_sequence<I...>)
         {
-            // @todo Реализовать и использовать здесь invoke
             return std::forward<F>(f)(std::get<I>(std::forward<Tuple>(t))...);
         }
     }
@@ -183,7 +206,6 @@ namespace grabin_test
         template <class R, class... Args>
         void check_impl(R(property)(Args...))
         {
-            // @todo Проверить типы: недопустима передача параметра по неконстантной ссылке
             using Value = std::tuple<std::remove_cv_t<std::remove_reference_t<Args>>...>;
             auto & rnd = grabin_test::random_engine();
 
@@ -191,8 +213,6 @@ namespace grabin_test
             {
                 auto args = grabin_test::Arbitrary<Value>::generate(rnd, generation);
 
-                // @todo Анализировать возвращаемое значение?
-                // @todo Поддержка предусловий: возможность запросить ещё значения без увеличиения generation
                 grabin_test::apply(property, args);
             }
         }
