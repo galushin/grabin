@@ -37,6 +37,7 @@
 		<Unit filename="../include/grabin/math.hpp" />
 		<Unit filename="../include/grabin/math/average_type.hpp" />
 		<Unit filename="../include/grabin/math/math_vector.hpp" />
+		<Unit filename="../include/grabin/math/matrix.hpp" />
 		<Unit filename="../include/grabin/statistics/linear_regression.hpp" />
 		<Unit filename="../include/grabin/statistics/mean.hpp" />
 		<Unit filename="../include/grabin/statistics/variance.hpp" />
@@ -45,6 +46,7 @@
 		<Unit filename="grabin_test.hpp" />
 		<Unit filename="main.cpp" />
 		<Unit filename="math/math_vector.cpp" />
+		<Unit filename="math/matrix.cpp" />
 		<Unit filename="statistics/linear_regression.cpp" />
 		<Unit filename="statistics/mean.cpp" />
 		<Unit filename="statistics/variance.cpp" />

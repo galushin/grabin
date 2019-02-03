@@ -70,6 +70,23 @@ inline namespace v1
             }
         }
 
+        /** @brief Обеспечение корректности индекса матрицы
+        @param x матрица
+        @param row номер строки
+        @param col номер столбца
+        @throw std::out_of_range, если @c row не принадлежит интервалу
+        <tt>[0;x.dim1())</tt> или @c col не принадлежит интервалу <tt>[0;x.dim2())</tt>
+        */
+        template <class Matrix>
+        static void check_index(Matrix const & x,
+                                typename Matrix::size_type row, typename Matrix::size_type col)
+        {
+            if(row < 0 || x.dim1() <= row || col < 0 || x.dim2() <= col)
+            {
+                throw std::out_of_range("Invalid index");
+            }
+        }
+
         template <class Scalar>
         static void check_division_by_zero(Scalar const & value)
         {
@@ -102,6 +119,10 @@ inline namespace v1
         {}
 
         // @todo Покрыть тестом
+        template <class Matrix>
+        static void check_index(Matrix const & x,
+                                typename Matrix::size_type row, typename Matrix::size_type col);
+
         template <class Scalar>
         static void check_division_by_zero(Scalar const & value);
     };
@@ -215,7 +236,7 @@ inline namespace v1
         /** @brief Индексированный доступ к данным
         @param index индекс элемента
         @return Ссылка на элемент с индексом @c index
-        @throw То же, что <tt>check::check_index(*this, index)</tt>
+        @throw То же, что <tt>check_policy::check_index(*this, index)</tt>
         */
         value_type & operator[](size_type index)
         {
