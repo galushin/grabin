@@ -20,13 +20,6 @@ Grabin -- это свободной программное обеспечени�
 #include <catch2/catch.hpp>
 #include "../grabin_test.hpp"
 
-namespace grabin_test
-{
-    template <class T, class Check>
-    struct Arbitrary<grabin::matrix<T, Check>>;
-}
-// namespace grabin_test
-
 TEST_CASE("matrix : types and default ctor")
 {
     using Value = int;
@@ -118,3 +111,95 @@ TEST_CASE("matrix: non-const indexing")
         property(rows, cols);
     }
 }
+
+namespace grabin_test
+{
+    template <class T, class Check>
+    struct Arbitrary<grabin::matrix<T, Check>>
+    {
+        using value_type = grabin::matrix<T, Check>;
+
+        template <class Engine>
+        static value_type generate(Engine & rnd, generation_t generation)
+        {
+            using Size = typename value_type::size_type;
+            auto const rows = Arbitrary<container_size<Size>>::generate(rnd, generation);
+            auto const cols = Arbitrary<container_size<Size>>::generate(rnd, generation);
+
+            value_type result(rows, cols);
+
+            std::uniform_int_distribution<generation_t> distr(0, generation);
+            for(auto i = 0*rows; i < rows; ++ i)
+            for(auto j = 0*cols; j < cols; ++ j)
+            {
+                using Elem = typename value_type::value_type;
+                result(i, j) = Arbitrary<Elem>::generate(rnd, distr(rnd));
+            }
+
+            return result;
+        }
+    };
+}
+// namespace grabin_test
+
+// Итераторы
+TEST_CASE("matrix : begin/end")
+{
+    using Value = int;
+    using Matrix = grabin::matrix<Value>;
+
+    auto property = [](Matrix const & x)
+    {
+        std::vector<Value> const z1(x.begin(), x.end());
+
+        auto const z2 = [&]()
+        {
+            std::vector<Value> result;
+            result.reserve(x.size());
+
+            for(auto i = 0*x.dim1(); i < x.dim1(); ++ i)
+            for(auto j = 0*x.dim2(); j < x.dim2(); ++ j)
+            {
+                result.push_back(x(i, j));
+            }
+
+            return result;
+        }();
+
+        CHECK(z1 == z2);
+    };
+
+    grabin_test::check(property);
+}
+
+// @todo Неконстантные begin/end
+// @todo cbegin/cend
+
+TEST_CASE("matrix : equality")
+{
+    using Value = int;
+    using Matrix = grabin::matrix<Value>;
+
+    auto property = [](Matrix const & x, Matrix const & y)
+    {
+        CHECK(x == x);
+        CHECK(y == y);
+
+        if(std::equal(x.begin(), x.end(), y.begin(), y.end()))
+        {
+            CHECK(x == y);
+            CHECK_FALSE(x != y);
+        }
+        else
+        {
+            CHECK_FALSE(x == y);
+            CHECK(x != y);
+        }
+    };
+
+    grabin_test::check(property);
+}
+
+// Линейные операции
+// @todo Умножение матрицы на число
+// @todo Сложение матриц

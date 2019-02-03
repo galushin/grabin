@@ -46,6 +46,9 @@ inline namespace v1
         /// @brief Тип для представления количества элементов и индексов
         using size_type = typename Data::size_type;
 
+        /// @brief Тип констатного итератора
+        using const_iterator = typename Data::const_iterator;
+
         /// @brief Стратегия проверок и обработки ошибок
         using check_policy = Check;
 
@@ -111,11 +114,44 @@ inline namespace v1
         }
         //@}
 
+        // Итераторы
+        /// @brief Итератор начала последовательности элементов
+        const_iterator begin() const
+        {
+            return this->data_.begin();
+        }
+
+        /// @brief Итератор конца последовательности элементов
+        const_iterator end() const
+        {
+            return this->data_.end();
+        }
+
     private:
         Data data_;
         size_type rows_ = 0;
         size_type cols_ = 0;
     };
+
+    /** @brief Оператор "равно"
+    @param x,y аргументы
+    @return <tt> std::equal(x.begin(), x.end(), y.begin(), y.end()) </tt>
+    */
+    template <class T, class Check>
+    bool operator==(matrix<T, Check> const & x, matrix<T, Check> const & y)
+    {
+        return std::equal(x.begin(), x.end(), y.begin(), y.end());
+    }
+
+    /** @brief Оператор "не равно"
+    @param x,y аргументы
+    @return <tt> !(x == y) </tt>
+    */
+    template <class T, class Check>
+    bool operator!=(matrix<T, Check> const & x, matrix<T, Check> const & y)
+    {
+        return !(x == y);
+    }
 }
 // namespace v1
 }
