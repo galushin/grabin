@@ -24,6 +24,7 @@ Grabin -- это свободной программное обеспечени�
 */
 
 #include <grabin/math/average_type.hpp>
+#include <grabin/operators.hpp>
 #include <grabin/utility/as_const.hpp>
 
 #include <cassert>
@@ -140,6 +141,7 @@ inline namespace v1
     */
     template <class T, class CheckPolicy = math_vector_throws_check_policy>
     class math_vector
+     : grabin::operators::container_equality::enable_adl
     {
         using Container = std::vector<T>;
 
@@ -389,29 +391,6 @@ inline namespace v1
     private:
         Container data_;
     };
-
-    // Равенство и неравенство
-    /** @brief Оператор "равно"
-    @param x,y аргументы
-    @return <tt> std::equal(x.begin(), x.end(), y.begin(), y.end()) </tt>
-    */
-    template <class T, class Check>
-    bool operator==(math_vector<T, Check> const & x,
-                    math_vector<T, Check> const & y)
-    {
-        return std::equal(x.begin(), x.end(), y.begin(), y.end());
-    }
-
-    /** @brief Оператор "не равно"
-    @param x,y аргументы
-    @return <tt> !(x == y) </tt>
-    */
-    template <class T, class Check>
-    bool operator!=(math_vector<T, Check> const & x,
-                    math_vector<T, Check> const & y)
-    {
-        return !(x == y);
-    }
 
     // Линейные операции
     //@{
