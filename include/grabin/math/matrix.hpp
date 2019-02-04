@@ -34,6 +34,7 @@ inline namespace v1
     */
     template <class T, class Check = grabin::math_vector_throws_check_policy>
     class matrix
+     : grabin::operators::container_equality::enable_adl
     {
         // @todo Может быть использовать менее жёсткую стратегию проверок здесь?
         using Data = grabin::math_vector<T, Check>;
@@ -203,26 +204,6 @@ inline namespace v1
         size_type rows_ = 0;
         size_type cols_ = 0;
     };
-
-    /** @brief Оператор "равно"
-    @param x,y аргументы
-    @return <tt> std::equal(x.begin(), x.end(), y.begin(), y.end()) </tt>
-    */
-    template <class T, class Check>
-    bool operator==(matrix<T, Check> const & x, matrix<T, Check> const & y)
-    {
-        return std::equal(x.begin(), x.end(), y.begin(), y.end());
-    }
-
-    /** @brief Оператор "не равно"
-    @param x,y аргументы
-    @return <tt> !(x == y) </tt>
-    */
-    template <class T, class Check>
-    bool operator!=(matrix<T, Check> const & x, matrix<T, Check> const & y)
-    {
-        return !(x == y);
-    }
 
     // Линейные операции
     //@{
