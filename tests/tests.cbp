@@ -49,6 +49,7 @@
 		<Unit filename="main.cpp" />
 		<Unit filename="math/math_vector.cpp" />
 		<Unit filename="math/matrix.cpp" />
+		<Unit filename="numeric/linear_algebra.cpp" />
 		<Unit filename="statistics/linear_regression.cpp" />
 		<Unit filename="statistics/mean.cpp" />
 		<Unit filename="statistics/variance.cpp" />
