@@ -34,6 +34,8 @@ TEST_CASE("matrix : types and default ctor")
 
     CHECK(x.dim1() == 0);
     CHECK(x.dim2() == 0);
+    CHECK(x.dim().first == x.dim1());
+    CHECK(x.dim().second == x.dim2());
     CHECK(x.size() == 0);
 }
 
@@ -48,6 +50,8 @@ TEST_CASE("matrix : ctor with size")
 
         CHECK(A.dim1() == rows);
         CHECK(A.dim2() == cols);
+        CHECK(A.dim().first == A.dim1());
+        CHECK(A.dim().second == A.dim2());
         CHECK(A.size() == rows*cols);
 
         for(auto i = 0*A.dim1(); i < A.dim1(); ++ i)
@@ -143,7 +147,7 @@ namespace grabin_test
 // namespace grabin_test
 
 // Итераторы
-TEST_CASE("matrix : begin/end")
+TEST_CASE("matrix : constant begin/end")
 {
     using Value = int;
     using Matrix = grabin::matrix<Value>;
@@ -172,8 +176,48 @@ TEST_CASE("matrix : begin/end")
     grabin_test::check(property);
 }
 
-// @todo Неконстантные begin/end
-// @todo cbegin/cend
+TEST_CASE("matrix : non-const begin/end")
+{
+    using Value = int;
+    using Matrix = grabin::matrix<Value>;
+
+    auto property = [](Matrix const & x_old)
+    {
+        auto x = x_old;
+        auto & rnd = grabin_test::random_engine();
+
+        std::vector<Value> vec(x.size());
+        for(auto & elem : vec)
+        {
+            using Generator = grabin_test::Arbitrary<Value>;
+            elem = Generator::generate(rnd, x_old.size());
+        }
+
+        std::copy(vec.begin(), vec.end(), x.begin());
+
+        CAPTURE(vec, x_old, x);
+        CHECK(std::equal(x.begin(), x.end(), vec.begin(), vec.end()));
+    };
+
+    grabin_test::check(property);
+}
+
+TEST_CASE("matrix: cbegin/cend")
+{
+    using Value = int;
+    using Matrix = grabin::matrix<Value>;
+
+    auto property = [](Matrix x)
+    {
+        static_assert(std::is_same<decltype(x.cbegin()), Matrix::const_iterator>::value, "");
+        static_assert(std::is_same<decltype(x.cend()), Matrix::const_iterator>::value, "");
+
+        CHECK(x.cbegin() == grabin::as_const(x).begin());
+        CHECK(x.cend() == grabin::as_const(x).end());
+    };
+
+    grabin_test::check(property);
+}
 
 TEST_CASE("matrix : equality")
 {
@@ -201,5 +245,127 @@ TEST_CASE("matrix : equality")
 }
 
 // Линейные операции
-// @todo Умножение матрицы на число
-// @todo Сложение матриц
+TEST_CASE("matrix: multiplication by scalar")
+{
+    using Value = int;
+    using Matrix = grabin::matrix<Value>;
+
+    auto property = [](Matrix const & x, Value const & a)
+    {
+        auto const y1 = [&]()
+        {
+            auto y = x;
+
+            for(auto & e : y)
+            {
+                e *= a;
+            }
+            return y;
+        }();
+
+        auto const y2 = a * x;
+        auto const y3 = x * a;
+
+        auto const y4 = [&]()
+        {
+            auto y = x;
+            y *= a;
+            return y;
+        }();
+
+        REQUIRE(y1.dim1() == x.dim1());
+        REQUIRE(y1.dim2() == x.dim2());
+
+        for(auto i = 0*y1.dim1(); i < y1.dim1(); ++ i)
+        for(auto j = 0*y1.dim2(); j < y1.dim2(); ++ j)
+        {
+            CHECK(y1(i, j) == a * x(i, j));
+        }
+
+        CHECK(y2 == y1);
+        CHECK(y3 == y1);
+        CHECK(y4 == y1);
+    };
+
+    for(auto generation = 0; generation < 100; ++ generation)
+    {
+        auto & rnd = grabin_test::random_engine();
+        std::uniform_int_distribution<Value> distr(-1000, +1000);
+
+        auto const a = distr(rnd);
+
+        using Size = Matrix::size_type;
+        using Size_generator = grabin_test::Arbitrary<grabin_test::container_size<Size>>;
+        auto const rows = Size_generator::generate(rnd, generation);
+        auto const cols = Size_generator::generate(rnd, generation);
+        Matrix xs(rows+1, cols+1);
+        std::generate(xs.begin(), xs.end(), [&]{ return distr(rnd); });
+
+        property(xs, a);
+    }
+}
+
+TEST_CASE("matrix: operator plus")
+{
+    using Value = int;
+    using Matrix = grabin::matrix<Value>;
+
+    auto property = [](Matrix const & x, Matrix const & y)
+    {
+        auto const rows = x.dim1();
+        auto const cols = x.dim2();
+
+        REQUIRE(y.dim1() == rows);
+        REQUIRE(y.dim2() == cols);
+
+        auto const z1 = [&]()
+        {
+            auto z = Matrix(rows, cols);
+
+            std::transform(x.begin(), x.end(), y.begin(), z.begin(),
+                           std::plus<>{});
+
+            return z;
+        }();
+
+        auto const z2 = x + y;
+
+        auto const z3 = [&]()
+        {
+            auto z = x;
+            z += y;
+            return z;
+        }();
+
+        REQUIRE(z1.dim1() == x.dim1());
+        REQUIRE(z1.dim2() == x.dim2());
+
+        for(auto i = 0*z1.dim1(); i < z1.dim1(); ++ i)
+        for(auto j = 0*z1.dim2(); j < z1.dim2(); ++ j)
+        {
+            CHECK(z1(i, j) == x(i, j) + y(i, j));
+        }
+
+        CHECK(z2 == z1);
+        CHECK(z3 == z1);
+    };
+
+    for(auto generation = 0; generation < 100; ++ generation)
+    {
+        auto & rnd = grabin_test::random_engine();
+        std::uniform_int_distribution<Value> distr(-1000, +1000);
+
+        using Size = Matrix::size_type;
+        using Size_generator = grabin_test::Arbitrary<grabin_test::container_size<Size>>;
+        auto const rows = Size_generator::generate(rnd, generation);
+        auto const cols = Size_generator::generate(rnd, generation);
+
+        Matrix xs(rows+1, cols+1);
+        std::generate(xs.begin(), xs.end(), [&]{ return distr(rnd); });
+
+        Matrix ys(rows+1, cols+1);
+        std::generate(ys.begin(), ys.end(), [&]{ return distr(rnd); });
+
+        property(xs, ys);
+    }
+}

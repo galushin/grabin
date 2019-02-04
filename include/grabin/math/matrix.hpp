@@ -46,6 +46,9 @@ inline namespace v1
         /// @brief Тип для представления количества элементов и индексов
         using size_type = typename Data::size_type;
 
+        /// @brief Тип неконстатного итератора
+        using iterator = typename Data::iterator;
+
         /// @brief Тип констатного итератора
         using const_iterator = typename Data::const_iterator;
 
@@ -88,6 +91,14 @@ inline namespace v1
             return this->cols_;
         }
 
+        /** @brief Размерности матрицы
+        @return <tt>make_pair(this->dim1(), this->dim2())</tt>
+        */
+        std::pair<size_type, size_type> dim() const
+        {
+            return {this->dim1(), this->dim2()};
+        }
+
         /// @brief Количество элементов матрицы
         size_type size() const
         {
@@ -115,16 +126,76 @@ inline namespace v1
         //@}
 
         // Итераторы
+        //@{
         /// @brief Итератор начала последовательности элементов
+        iterator begin()
+        {
+            return this->data_.begin();
+        }
+
         const_iterator begin() const
         {
             return this->data_.begin();
         }
 
+        const_iterator cbegin() const
+        {
+            return this->begin();
+        }
+        //@}
+
+        //@{
         /// @brief Итератор конца последовательности элементов
+        iterator end()
+        {
+            return this->data_.end();
+        }
+
         const_iterator end() const
         {
             return this->data_.end();
+        }
+
+        const_iterator cend() const
+        {
+            return this->end();
+        }
+        //@}
+
+        // Линейные операции
+        /** @brief Умножение матрицы на скаляр
+        @param a скаляр
+        @post Каждый элементы <tt>*this</tt> умножается на @c y
+        @return <tt>*this</tt>
+        */
+        matrix & operator*=(value_type const & a)
+        {
+            this->data_ *= a;
+            return *this;
+        }
+
+        /** @brief Прибавление матрицы
+        @param x вектор
+        @pre <tt>x.dim() == this->dim()</tt>
+        @return <tt>*this</tt>
+        @post К каждому элементу <tt>*this</tt> прибавляется соответствующий
+        элемент @c x
+        @throws То же, что <tt>check_policy::ensure_equal_dimensions(*this, x)</tt>
+        */
+        matrix & operator+=(matrix const & x)
+        {
+            check_policy::ensure_equal_dimensions(*this, x);
+
+            auto dest = this->begin();
+            auto src = x.begin();
+            auto const src_last = x.end();
+
+            for(; src != src_last; ++src, ++ dest)
+            {
+                *dest += *src;
+            }
+
+            return *this;
         }
 
     private:
@@ -151,6 +222,48 @@ inline namespace v1
     bool operator!=(matrix<T, Check> const & x, matrix<T, Check> const & y)
     {
         return !(x == y);
+    }
+
+    // Линейные операции
+    //@{
+    /** @brief Умножение матрицы на скаляр
+    @param x матрица
+    @param a скаляр
+    @return Матрица, размерности которой равны размерностям @c x, а элементы
+    равны соответствующим элементам @c x, умноженным на скаляр @c a.
+    */
+    template <class T, class Check>
+    matrix<T, Check>
+    operator*(matrix<T, Check> x,
+              typename matrix<T, Check>::value_type const & a)
+    {
+        x *= a;
+        return x;
+    }
+
+    template <class T, class Check>
+    matrix<T, Check>
+    operator*(typename matrix<T, Check>::value_type const & a,
+              matrix<T, Check> const & x)
+    {
+        return x * a;
+    }
+    //@}
+
+    /** @brief Оператор сложения двух матриц
+    @param x, y слагаемые
+    @pre <tt>x.dim1() == y.dim1()</tt>
+    @pre <tt>x.dim2() == y.dim2()</tt>
+    @return Матрица, размерности которой равны размерностям слагаемых, а
+    элементы равны сумме соответствующих элементов слагаемых.
+    @throw То же, что <tt> Check::ensure_equal_dimensions(*this, x) </tt>
+    */
+    template <class T, class Check>
+    matrix<T, Check>
+    operator+(matrix<T, Check> x, matrix<T, Check> const & y)
+    {
+        x += y;
+        return x;
     }
 }
 // namespace v1
