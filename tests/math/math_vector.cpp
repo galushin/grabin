@@ -590,8 +590,6 @@ TEST_CASE("math_vector: operator plus")
     }
 }
 
-#include <stdexcept>
-
 TEST_CASE("math_vector: operator plus throws on different dimensions")
 {
     using Value = int;
