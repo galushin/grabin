@@ -231,6 +231,54 @@ namespace Matchers
     {
         return ::Catch::Matchers::WithinAbs(target, std::abs(target) * rel_error);
     }
+
+    template <class Container>
+    class elementwise_within_abs_matcher
+     : public Catch::Matchers::Impl::MatcherBase<Container>
+    {
+    public:
+        elementwise_within_abs_matcher(Container target, double abs_error)
+         : target_(std::move(target))
+         , eps_(abs_error)
+        {
+            CATCH_ENFORCE(abs_error >= 0, "Invalid margin: " << abs_error << '.'
+                          << " Margin has to be non-negative.");
+        }
+
+        bool match(Container const & actual) const override
+        {
+            auto i = actual.begin();
+            auto i_end = actual.end();
+            auto j = this->target_.begin();
+            auto j_end = this->target_.end();
+
+            for(; i != i_end && j != j_end; ++ i, ++ j)
+            {
+                if(*i > *j + this->eps_ || *j > this->eps_ + *i)
+                {
+                    return false;
+                }
+            }
+
+            return (i == i_end) && (j == j_end);
+        }
+
+        std::string describe() const override
+        {
+            return "is within " + ::Catch::Detail::stringify(this->eps_) + " of "
+                   + ::Catch::Detail::stringify(this->target_);
+        }
+
+    private:
+        Container target_;
+        double eps_;
+    };
+
+    template <class Container>
+    auto elementwise_within_abs(Container target, double abs_error)
+    {
+        return elementwise_within_abs_matcher<Container>(std::move(target), abs_error);
+    }
 }
 // namespace Matchers
 }

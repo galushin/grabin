@@ -20,6 +20,8 @@ Grabin -- это свободной программное обеспечени�
 #include <catch2/catch.hpp>
 #include "../grabin_test.hpp"
 
+#include <cmath>
+
 TEST_CASE("matrix : types and default ctor")
 {
     using Value = int;
@@ -44,7 +46,7 @@ TEST_CASE("matrix : ctor with size")
     using Value = int;
     using Matrix = grabin::matrix<Value>;
 
-    auto property = [](grabin_test::container_size<int> rows, grabin_test::container_size<int> cols)
+    auto property = [](Matrix::size_type rows, Matrix::size_type cols)
     {
         Matrix const A(rows, cols);
 
@@ -64,7 +66,16 @@ TEST_CASE("matrix : ctor with size")
         }
     };
 
-    grabin_test::check(property);
+    for(auto generation = 0; generation < 100; ++ generation)
+    {
+        auto & rnd = grabin_test::random_engine();
+        std::uniform_int_distribution<Matrix::size_type> distr(0, std::sqrt(generation));
+
+        auto const rows = distr(rnd);
+        auto const cols = distr(rnd);
+
+        property(rows, cols);
+    }
 }
 
 TEST_CASE("matrix: non-const indexing")
@@ -107,7 +118,7 @@ TEST_CASE("matrix: non-const indexing")
     for(auto generation = 0; generation < 100; ++ generation)
     {
         auto & rnd = grabin_test::random_engine();
-        std::uniform_int_distribution<Matrix::size_type> distr(0, generation);
+        std::uniform_int_distribution<Matrix::size_type> distr(0, std::sqrt(generation));
 
         auto const rows = distr(rnd);
         auto const cols = distr(rnd);
@@ -127,8 +138,9 @@ namespace grabin_test
         static value_type generate(Engine & rnd, generation_t generation)
         {
             using Size = typename value_type::size_type;
-            auto const rows = Arbitrary<container_size<Size>>::generate(rnd, generation);
-            auto const cols = Arbitrary<container_size<Size>>::generate(rnd, generation);
+            Size const n = std::sqrt(generation);
+            auto const rows = Arbitrary<container_size<Size>>::generate(rnd, n);
+            auto const cols = Arbitrary<container_size<Size>>::generate(rnd, n);
 
             value_type result(rows, cols);
 

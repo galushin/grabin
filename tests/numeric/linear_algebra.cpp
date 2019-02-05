@@ -84,9 +84,5 @@ TEST_CASE("minres solver")
     auto const x0 = grabin::linear_algebra::minimal_residue(A, b);
 
     auto const eps = 1e-3;
-    CHECK(x0.dim() == x.dim());
-    for(auto i = 0*x.dim(); i < x.dim(); ++ i)
-    {
-        CHECK_THAT(x0[i], Catch::Matchers::WithinAbs(x[i], eps));
-    }
+    CHECK_THAT(x0, grabin_test::Matchers::elementwise_within_abs(x, eps));
 }
