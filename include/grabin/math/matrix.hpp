@@ -246,6 +246,36 @@ inline namespace v1
         x += y;
         return x;
     }
+
+    // Умножение матрицы на вектор
+    /** @brief Умножение матрицы не вектор
+    @param A матрица
+    @param x вектор
+    @pre <tt>A.dim2() == x.dim()</tt>
+    @return Вектор размерности <tt>A.dim1()</tt>, равный произведению матрицы @c A на вектор @c x
+    */
+    template <class T, class Check>
+    math_vector<T, Check>
+    operator*(matrix<T, Check> const & A, math_vector<T, Check> const & x)
+    {
+        // @todo Как проверять это через стратегию?
+        if(A.dim2() != x.dim())
+        {
+            throw std::logic_error("Incompatible dimensions");
+        }
+
+        math_vector<T, Check> result(A.dim1());
+
+        for(auto i = 0*A.dim1(); i < A.dim1(); ++ i)
+        {
+            for(auto j = 0*A.dim2(); j < A.dim2(); ++ j)
+            {
+                result[i] += A(i, j) * x[j];
+            }
+        }
+
+        return result;
+    }
 }
 // namespace v1
 }
