@@ -16,6 +16,7 @@ Grabin -- это свободной программное обеспечени�
 */
 
 #include <grabin/math/matrix.hpp>
+#include <grabin/numeric/linear_algebra.hpp>
 
 #include <catch2/catch.hpp>
 #include "../grabin_test.hpp"
@@ -60,4 +61,32 @@ TEST_CASE("matrix-vector product")
     CHECK(y[1] == A(1, 0)*x[0] + A(1, 1)*x[1] + A(1, 2)*x[2]);
 }
 
-// @todo Более изощрённый тест умножения матрицы на вектор
+TEST_CASE("minres solver")
+{
+    using Value = double;
+    using Matrix = grabin::matrix<Value>;
+    using Vector = grabin::math_vector<Value>;
+
+    Matrix A(2, 2);
+    A(0, 0) = 1;
+    A(0, 1) = -0.5;
+    A(1, 0) = - 0.5;
+    A(1, 1) = 2;
+
+    Vector x(2);
+
+    std::uniform_real_distribution<Value> distr(-10, 10);
+    auto gen = [&]{ return distr(grabin_test::random_engine()); };
+    std::generate(x.begin(), x.end(), gen);
+
+    auto const b = A*x;
+
+    auto const x0 = grabin::linear_algebra::minimal_residue(A, b);
+
+    auto const eps = 1e-3;
+    CHECK(x0.dim() == x.dim());
+    for(auto i = 0*x.dim(); i < x.dim(); ++ i)
+    {
+        CHECK_THAT(x0[i], Catch::Matchers::WithinAbs(x[i], eps));
+    }
+}

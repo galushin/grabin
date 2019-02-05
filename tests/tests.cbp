@@ -38,6 +38,7 @@
 		<Unit filename="../include/grabin/math/average_type.hpp" />
 		<Unit filename="../include/grabin/math/math_vector.hpp" />
 		<Unit filename="../include/grabin/math/matrix.hpp" />
+		<Unit filename="../include/grabin/numeric/linear_algebra.hpp" />
 		<Unit filename="../include/grabin/operators.hpp" />
 		<Unit filename="../include/grabin/statistics/linear_regression.hpp" />
 		<Unit filename="../include/grabin/statistics/mean.hpp" />
