@@ -28,6 +28,8 @@ Grabin -- это свободной программное обеспечени�
 #include <cmath>
 #include <cstdint>
 
+#include <functional>
+
 namespace grabin
 {
 inline namespace v1
@@ -38,8 +40,11 @@ namespace statistics
     и среднего.
     @tparam T тип значений, для которых вычисляется среднее
     @tparam Count тип количества элементов
+    @tparam Product Тип функционального объекта, задающий операцию умножения,
+    по умолчанию используется оператор *.
     */
-    template <class T, class Count = std::ptrdiff_t>
+    template <class T, class Count = std::ptrdiff_t,
+              class Product = std::multiplies<>>
     class variance_accumulator
     {
         using Mean = grabin::statistics::mean_accumulator<T, Count>;
@@ -56,9 +61,27 @@ namespace statistics
         using mean_type = typename Mean::mean_type;
 
         /// @brief Тип для представления дисперсии
-        using variance_type = mean_type;
+        using variance_type = decltype(std::declval<Product>()(std::declval<mean_type>(), std::declval<mean_type>()));
 
         // Создание, копирование, уничтожение
+        /** @brief Конструктор без аргументов
+        @post <tt>this->count() == 0</tt>
+        @post <tt>this->mean() == mean_type()</tt>
+        @post <tt>this->variance() == variance_type()</tt>
+        */
+        variance_accumulator() = default;
+
+        /** @brief Конструктор с явным заданием нулевого элемента
+        @post <tt>this->count() == 0</tt>
+        @post <tt>this->mean() == zero</tt>
+        @post <tt>this->variance() == prod(zero, zero)</tt>, где @c prod --
+        функциональный объект, используемый для вычисления произведения
+        */
+        variance_accumulator(mean_type const & zero)
+         : prod_()
+         , mean_(zero)
+         , s2_(prod_(zero, zero))
+        {}
 
         // Свойства
         /** @brief Количество обработанных элементов
@@ -113,12 +136,13 @@ namespace statistics
 
             this->mean_(value);
 
-            s2_ += (value - this->mean()) * (value - mean_old);
+            s2_ += this->prod_(value - this->mean(), value - mean_old);
 
             return *this;
         }
 
     private:
+        Product prod_;
         Mean mean_;
         variance_type s2_ = variance_type(0);
     };
