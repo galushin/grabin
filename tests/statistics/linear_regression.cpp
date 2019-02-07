@@ -20,6 +20,8 @@ Grabin -- это свободной программное обеспечени�
 #include "../grabin_test.hpp"
 #include <catch2/catch.hpp>
 
+#include <grabin/view/indices.hpp>
+
 TEST_CASE("linear_regression_accumulator : up to two points")
 {
     using Value = double;
@@ -127,7 +129,7 @@ TEST_CASE("linear_regression_accumulator : on sample, with noise")
 
         REQUIRE(xs.size() == es.size());
 
-        for(auto i = 0*xs.size(); i < xs.size(); ++ i)
+        for(auto const & i : grabin::view::indices_of(xs))
         {
             auto const & x = xs[i];
             acc(x, f(x) + es[i]);

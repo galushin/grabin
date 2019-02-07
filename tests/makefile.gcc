@@ -32,9 +32,9 @@ OBJDIR_RELEASE = ./obj/Release
 DEP_RELEASE = 
 OUT_RELEASE = ./bin/Release/tests
 
-OBJ_DEBUG = $(OBJDIR_DEBUG)/grabin_test.o $(OBJDIR_DEBUG)/main.o $(OBJDIR_DEBUG)/math/math_vector.o $(OBJDIR_DEBUG)/math/matrix.o $(OBJDIR_DEBUG)/numeric/linear_algebra.o $(OBJDIR_DEBUG)/statistics/linear_regression.o $(OBJDIR_DEBUG)/statistics/mean.o $(OBJDIR_DEBUG)/statistics/variance.o $(OBJDIR_DEBUG)/utility/as_const.o
+OBJ_DEBUG = $(OBJDIR_DEBUG)/grabin_test.o $(OBJDIR_DEBUG)/main.o $(OBJDIR_DEBUG)/math/math_vector.o $(OBJDIR_DEBUG)/math/matrix.o $(OBJDIR_DEBUG)/numeric/linear_algebra.o $(OBJDIR_DEBUG)/statistics/linear_regression.o $(OBJDIR_DEBUG)/statistics/mean.o $(OBJDIR_DEBUG)/statistics/variance.o $(OBJDIR_DEBUG)/utility/as_const.o $(OBJDIR_DEBUG)/view/indices.o
 
-OBJ_RELEASE = $(OBJDIR_RELEASE)/grabin_test.o $(OBJDIR_RELEASE)/main.o $(OBJDIR_RELEASE)/math/math_vector.o $(OBJDIR_RELEASE)/math/matrix.o $(OBJDIR_RELEASE)/numeric/linear_algebra.o $(OBJDIR_RELEASE)/statistics/linear_regression.o $(OBJDIR_RELEASE)/statistics/mean.o $(OBJDIR_RELEASE)/statistics/variance.o $(OBJDIR_RELEASE)/utility/as_const.o
+OBJ_RELEASE = $(OBJDIR_RELEASE)/grabin_test.o $(OBJDIR_RELEASE)/main.o $(OBJDIR_RELEASE)/math/math_vector.o $(OBJDIR_RELEASE)/math/matrix.o $(OBJDIR_RELEASE)/numeric/linear_algebra.o $(OBJDIR_RELEASE)/statistics/linear_regression.o $(OBJDIR_RELEASE)/statistics/mean.o $(OBJDIR_RELEASE)/statistics/variance.o $(OBJDIR_RELEASE)/utility/as_const.o $(OBJDIR_RELEASE)/view/indices.o
 
 all: debug release
 
@@ -47,6 +47,7 @@ before_debug:
 	test -d $(OBJDIR_DEBUG)/numeric || mkdir -p $(OBJDIR_DEBUG)/numeric
 	test -d $(OBJDIR_DEBUG)/statistics || mkdir -p $(OBJDIR_DEBUG)/statistics
 	test -d $(OBJDIR_DEBUG)/utility || mkdir -p $(OBJDIR_DEBUG)/utility
+	test -d $(OBJDIR_DEBUG)/view || mkdir -p $(OBJDIR_DEBUG)/view
 
 after_debug: 
 
@@ -82,6 +83,9 @@ $(OBJDIR_DEBUG)/statistics/variance.o: statistics/variance.cpp
 $(OBJDIR_DEBUG)/utility/as_const.o: utility/as_const.cpp
 	$(CXX) $(CFLAGS_DEBUG) $(INC_DEBUG) -c utility/as_const.cpp -o $(OBJDIR_DEBUG)/utility/as_const.o
 
+$(OBJDIR_DEBUG)/view/indices.o: view/indices.cpp
+	$(CXX) $(CFLAGS_DEBUG) $(INC_DEBUG) -c view/indices.cpp -o $(OBJDIR_DEBUG)/view/indices.o
+
 clean_debug: 
 	rm -f $(OBJ_DEBUG) $(OUT_DEBUG)
 	rm -rf ./bin/Debug
@@ -90,6 +94,7 @@ clean_debug:
 	rm -rf $(OBJDIR_DEBUG)/numeric
 	rm -rf $(OBJDIR_DEBUG)/statistics
 	rm -rf $(OBJDIR_DEBUG)/utility
+	rm -rf $(OBJDIR_DEBUG)/view
 
 before_release: 
 	test -d ./bin/Release || mkdir -p ./bin/Release
@@ -98,6 +103,7 @@ before_release:
 	test -d $(OBJDIR_RELEASE)/numeric || mkdir -p $(OBJDIR_RELEASE)/numeric
 	test -d $(OBJDIR_RELEASE)/statistics || mkdir -p $(OBJDIR_RELEASE)/statistics
 	test -d $(OBJDIR_RELEASE)/utility || mkdir -p $(OBJDIR_RELEASE)/utility
+	test -d $(OBJDIR_RELEASE)/view || mkdir -p $(OBJDIR_RELEASE)/view
 
 after_release: 
 
@@ -133,6 +139,9 @@ $(OBJDIR_RELEASE)/statistics/variance.o: statistics/variance.cpp
 $(OBJDIR_RELEASE)/utility/as_const.o: utility/as_const.cpp
 	$(CXX) $(CFLAGS_RELEASE) $(INC_RELEASE) -c utility/as_const.cpp -o $(OBJDIR_RELEASE)/utility/as_const.o
 
+$(OBJDIR_RELEASE)/view/indices.o: view/indices.cpp
+	$(CXX) $(CFLAGS_RELEASE) $(INC_RELEASE) -c view/indices.cpp -o $(OBJDIR_RELEASE)/view/indices.o
+
 clean_release: 
 	rm -f $(OBJ_RELEASE) $(OUT_RELEASE)
 	rm -rf ./bin/Release
@@ -141,6 +150,7 @@ clean_release:
 	rm -rf $(OBJDIR_RELEASE)/numeric
 	rm -rf $(OBJDIR_RELEASE)/statistics
 	rm -rf $(OBJDIR_RELEASE)/utility
+	rm -rf $(OBJDIR_RELEASE)/view
 
 .PHONY: before_debug after_debug clean_debug before_release after_release clean_release
 

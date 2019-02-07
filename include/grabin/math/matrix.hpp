@@ -23,6 +23,7 @@ Grabin -- это свободной программное обеспечени�
 */
 
 #include <grabin/math/math_vector.hpp>
+#include <grabin/view/indices.hpp>
 
 namespace grabin
 {
@@ -292,12 +293,10 @@ inline namespace v1
 
         math_vector<T, Check> result(A.dim1());
 
-        for(auto i = 0*A.dim1(); i < A.dim1(); ++ i)
+        for(auto const & i : grabin::view::indices(A.dim1()))
+        for(auto const & j : grabin::view::indices(A.dim2()))
         {
-            for(auto j = 0*A.dim2(); j < A.dim2(); ++ j)
-            {
-                result[i] += A(i, j) * x[j];
-            }
+            result[i] += A(i, j) * x[j];
         }
 
         return result;
@@ -323,8 +322,8 @@ namespace linear_algebra
         {
             matrix<typename Vector::value_type> result(x.dim(), y.dim());
 
-            for(auto i = 0*x.dim(); i != x.dim(); ++ i)
-            for(auto j = 0*y.dim(); j != y.dim(); ++ j)
+            for(auto const & i : grabin::view::indices_of(x))
+            for(auto const & j : grabin::view::indices_of(y))
             {
                 result(i, j) = x[i] * y[j];
             }
