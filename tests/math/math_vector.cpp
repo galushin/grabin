@@ -20,6 +20,8 @@ Grabin -- это свободной программное обеспечени�
 #include <catch2/catch.hpp>
 #include "../grabin_test.hpp"
 
+#include <grabin/view/indices.hpp>
+
 namespace grabin_test
 {
     template <class T, class Check>
@@ -282,7 +284,7 @@ TEST_CASE("math_vector: const indexing")
 
     auto property = [](Vector const & x)
     {
-        for(auto i = 0*x.dim(); i < x.dim(); ++ i)
+        for(auto const & i : grabin::view::indices_of(x))
         {
             CHECK(x[i] == x.begin()[i]);
 
@@ -312,7 +314,7 @@ TEST_CASE("math_vector: non-const indexing")
         auto const & x_c = x;
         CHECK(x_c[index] == a);
 
-        for(auto i = 0*x.dim(); i < x.dim(); ++ i)
+        for(auto const & i : grabin::view::indices_of(x))
         {
             if(i != index)
             {
@@ -351,7 +353,7 @@ TEST_CASE("math_vector: const at")
 
     auto property = [](Vector const & x)
     {
-        for(auto i = 0*x.dim(); i < x.dim(); ++ i)
+        for(auto const & i : grabin::view::indices_of(x))
         {
             CHECK(x.at(i) == x.begin()[i]);
 
@@ -381,7 +383,7 @@ TEST_CASE("math_vector: non-const at")
         auto const & x_c = x;
         CHECK(x_c[index] == a);
 
-        for(auto i = 0*x.dim(); i < x.dim(); ++ i)
+        for(auto const & i : grabin::view::indices_of(x))
         {
             if(i != index)
             {
@@ -443,7 +445,7 @@ TEST_CASE("math_vector: multiplication by scalar")
         }();
 
         REQUIRE(y1.dim() == x.dim());
-        for(auto i = 0*y1.dim(); i < y1.dim(); ++ i)
+        for(auto const & i : grabin::view::indices_of(y1))
         {
             CHECK(y1[i] == a * x[i]);
         }
@@ -566,7 +568,7 @@ TEST_CASE("math_vector: operator plus")
         }();
 
         REQUIRE(z1.dim() == x.dim());
-        for(auto i = 0*z1.dim(); i < z1.dim(); ++ i)
+        for(auto const & i : grabin::view::indices_of(z1))
         {
             CHECK(z1[i] == x[i] + y[i]);
         }

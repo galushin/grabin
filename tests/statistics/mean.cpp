@@ -20,6 +20,8 @@ Grabin -- это свободной программное обеспечени�
 #include "../grabin_test.hpp"
 #include <catch2/catch.hpp>
 
+#include <grabin/view/indices.hpp>
+
 #include <type_traits>
 
 TEST_CASE("mean_accumulator : two values")
@@ -71,7 +73,7 @@ TEST_CASE("mean_accumulator : floating-point arithmetic progression")
         static_assert(std::is_same<decltype(acc)::count_type, Counter>::value,"");
 
         auto const dx = (b - a)/n;
-        for(auto i = 0*n; i <= n; ++ i)
+        for(auto const & i : grabin::view::indices(n+1))
         {
             auto const x = a + dx*i;
             acc(x);
@@ -131,7 +133,7 @@ TEST_CASE("mean_accumulator : integer arithmetic progression")
         auto const mean_expected = n/2.0;
         grabin::statistics::mean_accumulator<Value> acc;
 
-        for(auto x = Value{0}; x <= n; ++ x)
+        for(auto const & x : grabin::view::indices(n+1))
         {
             acc(x);
         }
@@ -164,7 +166,7 @@ TEST_CASE("mean_accumulator : two math_vectorS")
 
         REQUIRE(acc.count() == 0);
         REQUIRE(acc.mean().dim() == value_1.dim());
-        for(auto i = 0*acc.mean().dim(); i < acc.mean().dim(); ++ i)
+        for(auto const & i : grabin::view::indices_of(acc.mean()))
         {
             REQUIRE_THAT(acc.mean()[i], Catch::Matchers::WithinAbs(0.0, 1e-10));
         }
@@ -175,7 +177,7 @@ TEST_CASE("mean_accumulator : two math_vectorS")
 
         REQUIRE(acc.count() == 1);
         REQUIRE(acc.mean().dim() == value_1.dim());
-        for(auto i = 0*acc.mean().dim(); i < acc.mean().dim(); ++ i)
+        for(auto const & i : grabin::view::indices_of(acc.mean()))
         {
             REQUIRE_THAT(acc.mean()[i], Catch::Matchers::WithinAbs(value_1[i], 1e-10));
         }
@@ -185,7 +187,7 @@ TEST_CASE("mean_accumulator : two math_vectorS")
         auto const avg2 = value_1 + (value_2 - value_1) / 2;
         REQUIRE(acc.count() == 2);
         REQUIRE(acc.mean().dim() == avg2.dim());
-        for(auto i = 0*acc.mean().dim(); i < acc.mean().dim(); ++ i)
+        for(auto const & i : grabin::view::indices_of(acc.mean()))
         {
             REQUIRE_THAT(acc.mean()[i], Catch::Matchers::WithinAbs(avg2[i], 1e-10));
         }
@@ -229,7 +231,7 @@ TEST_CASE("mean_accumulator : two math_vector<int>S")
 
         REQUIRE(acc.count() == 0);
         REQUIRE(acc.mean().dim() == value_1.dim());
-        for(auto i = 0*acc.mean().dim(); i < acc.mean().dim(); ++ i)
+        for(auto const & i : grabin::view::indices_of(acc.mean()))
         {
             REQUIRE_THAT(acc.mean()[i], Catch::Matchers::WithinAbs(0.0, 1e-10));
         }
@@ -240,7 +242,7 @@ TEST_CASE("mean_accumulator : two math_vector<int>S")
 
         REQUIRE(acc.count() == 1);
         REQUIRE(acc.mean().dim() == value_1.dim());
-        for(auto i = 0*acc.mean().dim(); i < acc.mean().dim(); ++ i)
+        for(auto const & i : grabin::view::indices_of(acc.mean()))
         {
             REQUIRE_THAT(acc.mean()[i], Catch::Matchers::WithinAbs(value_1[i], 1e-10));
         }
@@ -250,7 +252,7 @@ TEST_CASE("mean_accumulator : two math_vector<int>S")
         REQUIRE(acc.count() == 2);
         auto const avg2 = value_1 + (value_2 - Mean(value_1)) / 2;
         REQUIRE(acc.mean().dim() == avg2.dim());
-        for(auto i = 0*acc.mean().dim(); i < acc.mean().dim(); ++ i)
+        for(auto const & i : grabin::view::indices_of(acc.mean()))
         {
             REQUIRE_THAT(acc.mean()[i], Catch::Matchers::WithinAbs(avg2[i], 1e-10));
         }

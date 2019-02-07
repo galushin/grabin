@@ -20,6 +20,8 @@ Grabin -- это свободной программное обеспечени�
 #include "../grabin_test.hpp"
 #include <catch2/catch.hpp>
 
+#include <grabin/view/indices.hpp>
+
 TEST_CASE("variance_accumulator : two values")
 {
     using Value = double;
@@ -81,7 +83,7 @@ TEST_CASE("variance_accumulator : floating-point arithmetic progression")
 
         static_assert(std::is_same<decltype(acc)::count_type, Counter>::value,"");
 
-        for(auto i = 0*n; i <= n; ++ i)
+        for(auto const & i : grabin::view::indices(n+1))
         {
             auto const x = a + dx*i;
             acc(x);
@@ -156,7 +158,7 @@ TEST_CASE("covariance_matrix")
     auto const n = 100;
     std::vector<Vector> sample(n, Vector(2));
 
-    for(auto i = 0*n; i < n; ++ i)
+    for(auto const & i : grabin::view::indices(n))
     {
         sample[i][0] = (i+1);
         sample[i][1] = i*(i-1);

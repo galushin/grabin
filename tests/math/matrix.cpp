@@ -56,8 +56,8 @@ TEST_CASE("matrix : ctor with size")
         CHECK(A.dim().second == A.dim2());
         CHECK(A.size() == rows*cols);
 
-        for(auto i = 0*A.dim1(); i < A.dim1(); ++ i)
-        for(auto j = 0*A.dim1(); j < A.dim2(); ++ j)
+        for(auto const & i : grabin::view::indices(A.dim1()))
+        for(auto const & j : grabin::view::indices(A.dim2()))
         {
             CHECK(A(i, j) == Value(0));
 
@@ -99,8 +99,8 @@ TEST_CASE("matrix: non-const indexing")
         }();
 
 
-        for(auto i = 0*x.dim1(); i < x.dim1(); ++ i)
-        for(auto j = 0*x.dim2(); j < x.dim2(); ++ j)
+        for(auto const & i : grabin::view::indices(x.dim1()))
+        for(auto const & j : grabin::view::indices(x.dim2()))
         {
             x(i, j) = z.at(i*cols + j);
 
@@ -108,8 +108,8 @@ TEST_CASE("matrix: non-const indexing")
             CHECK_THROWS_AS(x(-(i+1), -(j+1)), std::out_of_range);
         }
 
-        for(auto i = 0*x.dim1(); i < x.dim1(); ++ i)
-        for(auto j = 0*x.dim2(); j < x.dim2(); ++ j)
+        for(auto const & i : grabin::view::indices(x.dim1()))
+        for(auto const & j : grabin::view::indices(x.dim2()))
         {
             CHECK(grabin::as_const(x)(i, j) == z.at(i*cols + j));
         }
@@ -139,14 +139,14 @@ namespace grabin_test
         {
             using Size = typename value_type::size_type;
             Size const n = std::sqrt(generation);
-            auto const rows = Arbitrary<container_size<Size>>::generate(rnd, n);
-            auto const cols = Arbitrary<container_size<Size>>::generate(rnd, n);
+            auto const rows = Arbitrary<container_size<Size>>::generate(rnd, n).value;
+            auto const cols = Arbitrary<container_size<Size>>::generate(rnd, n).value;
 
             value_type result(rows, cols);
 
             std::uniform_int_distribution<generation_t> distr(0, generation);
-            for(auto i = 0*rows; i < rows; ++ i)
-            for(auto j = 0*cols; j < cols; ++ j)
+            for(auto const & i : grabin::view::indices(rows))
+            for(auto const & j : grabin::view::indices(cols))
             {
                 using Elem = typename value_type::value_type;
                 result(i, j) = Arbitrary<Elem>::generate(rnd, distr(rnd));
@@ -173,8 +173,8 @@ TEST_CASE("matrix : constant begin/end")
             std::vector<Value> result;
             result.reserve(x.size());
 
-            for(auto i = 0*x.dim1(); i < x.dim1(); ++ i)
-            for(auto j = 0*x.dim2(); j < x.dim2(); ++ j)
+            for(auto const & i : grabin::view::indices(x.dim1()))
+            for(auto const & j : grabin::view::indices(x.dim2()))
             {
                 result.push_back(x(i, j));
             }
@@ -288,8 +288,8 @@ TEST_CASE("matrix: multiplication by scalar")
         REQUIRE(y1.dim1() == x.dim1());
         REQUIRE(y1.dim2() == x.dim2());
 
-        for(auto i = 0*y1.dim1(); i < y1.dim1(); ++ i)
-        for(auto j = 0*y1.dim2(); j < y1.dim2(); ++ j)
+        for(auto const & i : grabin::view::indices(y1.dim1()))
+        for(auto const & j : grabin::view::indices(y1.dim2()))
         {
             CHECK(y1(i, j) == a * x(i, j));
         }
@@ -352,8 +352,8 @@ TEST_CASE("matrix: operator plus")
         REQUIRE(z1.dim1() == x.dim1());
         REQUIRE(z1.dim2() == x.dim2());
 
-        for(auto i = 0*z1.dim1(); i < z1.dim1(); ++ i)
-        for(auto j = 0*z1.dim2(); j < z1.dim2(); ++ j)
+        for(auto const & i : grabin::view::indices(z1.dim1()))
+        for(auto const & j : grabin::view::indices(z1.dim2()))
         {
             CHECK(z1(i, j) == x(i, j) + y(i, j));
         }

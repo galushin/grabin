@@ -153,6 +153,9 @@ inline namespace v1
         /// @brief Тип для представления размера и индексов
         using size_type = typename Container::difference_type;
 
+        /// @brief Тип для представления разности итераторов
+        using difference_type = typename Container::difference_type;
+
         /// @brief Тип неконстантного итератора
         using iterator = typename Container::iterator;
 
