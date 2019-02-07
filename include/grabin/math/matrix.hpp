@@ -305,11 +305,18 @@ inline namespace v1
 
 namespace linear_algebra
 {
+    /** @brief Тип функционального объекта для вычисления внешнего произведения
+    векторов
+    */
     class outer_product
     {
     public:
-        using is_transparent = void;
-
+        /** @brief Вычисление значения функции
+        @param x,y аргументы
+        @return Матрица, с числом строк <tt>x.dim()</tt> и числом столбцов
+        <tt>y.dim()</tt>. Элемент матрицы для любой допустимой пары индексов
+        <tt>(i, j)</tt> равен <tt>x[i]*y[j]</tt>.
+        */
         template <class Vector>
         matrix<typename Vector::value_type>
         operator()(Vector const & x, Vector const & y) const
