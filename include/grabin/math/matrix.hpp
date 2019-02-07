@@ -175,6 +175,17 @@ inline namespace v1
             return *this;
         }
 
+        /** @brief Деление матрицы на скаляр
+        @param a скаляр
+        @post Каждый элементы <tt>*this</tt> делится на @c y
+        @return <tt>*this</tt>
+        */
+        matrix & operator/=(value_type const & a)
+        {
+            this->data_ /= a;
+            return *this;
+        }
+
         /** @brief Прибавление матрицы
         @param x вектор
         @pre <tt>x.dim() == this->dim()</tt>
@@ -231,6 +242,21 @@ inline namespace v1
     }
     //@}
 
+    /** @brief Деление матрицы на скаляр
+    @param x матрица
+    @param a скаляр
+    @return Матрица, размерности которой равны размерностям @c x, а элементы
+    равны соответствующим элементам @c x, делённым на скаляр @c a.
+    */
+    template <class T, class Check>
+    matrix<T, Check>
+    operator/(matrix<T, Check> x,
+              typename matrix<T, Check>::value_type const & a)
+    {
+        x /= a;
+        return x;
+    }
+
     /** @brief Оператор сложения двух матриц
     @param x, y слагаемые
     @pre <tt>x.dim1() == y.dim1()</tt>
@@ -276,6 +302,38 @@ inline namespace v1
 
         return result;
     }
+
+namespace linear_algebra
+{
+    /** @brief Тип функционального объекта для вычисления внешнего произведения
+    векторов
+    */
+    class outer_product
+    {
+    public:
+        /** @brief Вычисление значения функции
+        @param x,y аргументы
+        @return Матрица, с числом строк <tt>x.dim()</tt> и числом столбцов
+        <tt>y.dim()</tt>. Элемент матрицы для любой допустимой пары индексов
+        <tt>(i, j)</tt> равен <tt>x[i]*y[j]</tt>.
+        */
+        template <class Vector>
+        matrix<typename Vector::value_type>
+        operator()(Vector const & x, Vector const & y) const
+        {
+            matrix<typename Vector::value_type> result(x.dim(), y.dim());
+
+            for(auto i = 0*x.dim(); i != x.dim(); ++ i)
+            for(auto j = 0*y.dim(); j != y.dim(); ++ j)
+            {
+                result(i, j) = x[i] * y[j];
+            }
+
+            return result;
+        }
+    };
+}
+// namespace linear_algebra
 }
 // namespace v1
 }

@@ -142,3 +142,51 @@ TEST_CASE("variance_accumulator : two integer values")
 
     grabin_test::check(checker);
 }
+
+#include <grabin/math/math_vector.hpp>
+#include <grabin/math/matrix.hpp>
+
+TEST_CASE("covariance_matrix")
+{
+    using Value = double;
+    using Vector = grabin::math_vector<Value>;
+    using Matrix = grabin::matrix<Value>;
+
+    // Формируем выборку
+    auto const n = 100;
+    std::vector<Vector> sample(n, Vector(2));
+
+    for(auto i = 0*n; i < n; ++ i)
+    {
+        sample[i][0] = (i+1);
+        sample[i][1] = i*(i-1);
+    }
+
+    // Ожидаемый результат
+    auto const m_obj = Vector{(n+1)/2.0, (n-1)*(n-2)/3};
+
+    auto const C_obj = [&]
+    {
+        Matrix C(2, 2);
+        C(0, 0) = (grabin::square(n)-1)/12.0;
+        C(0, 1) = C(1, 0) = (n+1)*(n-1)*(n-2)/4.0 - m_obj[0]*m_obj[1];
+        C(1, 1) = (n-2)*(n-1)*(3*grabin::square(n)-6*n+1)/15.0 - grabin::square(m_obj[1]);
+
+        return C;
+    }();
+
+    // "Накапливаем" ковариационную матрицу
+    using Product = grabin::linear_algebra::outer_product;
+    grabin::statistics::variance_accumulator<Vector, int, Product>
+        acc(Vector(m_obj.size()));
+
+    for(auto const & x : sample)
+    {
+        acc(x);
+    }
+
+    // Сравнить полученную матрицу с целевой
+    CHECK(acc.count() == n);
+    CHECK_THAT(acc.mean(), grabin_test::Matchers::elementwise_within_abs(m_obj, 1e-10));
+    CHECK_THAT(acc.variance(), grabin_test::Matchers::elementwise_within_abs(C_obj, 1e-10));
+}
