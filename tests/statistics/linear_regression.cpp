@@ -33,7 +33,7 @@ TEST_CASE("linear_regression_accumulator : up to two points")
         auto const y_1 = f(x_1);
         auto const y_2 = f(x_2);
 
-        grabin::statistics::linear_regression_accumulator<Value, Value> acc;
+        grabin::statistics::linear_regression_accumulator<Value> acc;
 
         static_assert(std::is_same<decltype(acc)::count_type, std::ptrdiff_t>::value, "");
         static_assert(std::is_same<decltype(acc)::intercept_type, Value>::value, "");
@@ -81,7 +81,7 @@ TEST_CASE("linear_regression_accumulator : on sample")
 
     auto checker = [](Value const & slope, Value const & intercept, std::vector<Value> const & xs)
     {
-        grabin::statistics::linear_regression_accumulator<Value, Value, Counter> acc;
+        grabin::statistics::linear_regression_accumulator<Value, Counter> acc;
 
         static_assert(std::is_same<decltype(acc)::count_type, Counter>::value, "");
 
@@ -121,7 +121,7 @@ TEST_CASE("linear_regression_accumulator : on sample, with noise")
     {
         CAPTURE(xs.size());
 
-        grabin::statistics::linear_regression_accumulator<Value, Value, Counter> acc;
+        grabin::statistics::linear_regression_accumulator<Value, Counter> acc;
 
         static_assert(std::is_same<decltype(acc)::count_type, Counter>::value, "");
 
@@ -162,4 +162,114 @@ TEST_CASE("linear_regression_accumulator : on sample, with noise")
 
         checker(a, b, xs, es);
     }
+}
+
+#include <grabin/math/math_vector.hpp>
+#include <grabin/math/matrix.hpp>
+#include <grabin/numeric/linear_algebra.hpp>
+#include <grabin/view/indices.hpp>
+
+TEST_CASE("linear regression multy-variable")
+{
+    using Output = double;
+    using Input = grabin::math_vector<double>;
+    using Counter = std::size_t;
+
+    auto property = [](grabin_test::container_size<Counter> N)
+    {
+        auto const sample_size = N.value;
+        std::uniform_real_distribution<double> distr(-100, 100);
+        auto & rnd = grabin_test::random_engine();
+        auto const beta = distr(rnd);
+        auto const alpha = Input{distr(rnd), distr(rnd)};
+
+        // Формируем выборку X
+        auto const gamma = std::uniform_real_distribution<double>(-5, 5)(rnd);
+        std::vector<Input> xs;
+
+        auto const n1 = static_cast<Counter>(std::sqrt(sample_size) + 2);
+        for(auto const & i : grabin::view::indices(n1))
+        for(auto const & j : grabin::view::indices(n1))
+        {
+            xs.push_back(Input{i, j + gamma * i});
+        }
+
+        // Формируем значения Y
+        std::vector<Output> ys;
+
+        for(auto const & x : xs)
+        {
+            ys.push_back(grabin::linear_algebra::inner_prod(alpha, x) + beta);
+        }
+
+        // Накапливаем наблюдения
+        auto const zero = Input(xs.front().dim());
+
+        using grabin::v1::statistics::linear_regression_accumulator;
+        linear_regression_accumulator<Input, Counter, grabin::linear_algebra::inner_product,
+                                      grabin::linear_algebra::outer_product,
+                                      grabin::linear_algebra::LU_solver>
+            acc(zero);
+
+        for(auto const & i : grabin::view::indices_of(xs))
+        {
+            acc(xs[i], ys[i]);
+        }
+
+        // Сравниваем с эталоном
+        CAPTURE(sample_size, gamma, alpha, beta);
+        REQUIRE_THAT(acc.intercept(), Catch::Matchers::WithinAbs(beta, 1e-3));
+        REQUIRE_THAT(acc.slope(), grabin_test::Matchers::elementwise_within_abs(alpha, 1e-3));
+    };
+
+    grabin_test::check(property);
+}
+
+TEST_CASE("linear regression multy-variable: regression")
+{
+    using Output = double;
+    using Input = grabin::math_vector<double>;
+    using Counter = std::size_t;
+
+    auto const sample_size = 100;
+    auto const beta = -42.5605978118;
+    auto const alpha = Input{76.6734388259, 27.1004337164};
+
+    // Формируем выборку X
+    auto const gamma = -2.5101011538;
+    std::vector<Input> xs;
+
+    auto const n1 = static_cast<Counter>(std::sqrt(sample_size) + 2);
+    for(auto const & i : grabin::view::indices(n1))
+    for(auto const & j : grabin::view::indices(n1))
+    {
+        xs.push_back(Input{i, j + gamma * i});
+    }
+
+    // Формируем значения Y
+    std::vector<Output> ys;
+
+    for(auto const & x : xs)
+    {
+        ys.push_back(grabin::linear_algebra::inner_prod(alpha, x) + beta);
+    }
+
+    // Накапливаем наблюдения
+    auto const zero = Input(xs.front().dim());
+
+    using grabin::v1::statistics::linear_regression_accumulator;
+    linear_regression_accumulator<Input, Counter, grabin::linear_algebra::inner_product,
+                                  grabin::linear_algebra::outer_product,
+                                  grabin::linear_algebra::LU_solver>
+        acc(zero);
+
+    for(auto const & i : grabin::view::indices_of(xs))
+    {
+        acc(xs[i], ys[i]);
+    }
+
+    // Сравниваем с эталоном
+    CAPTURE(acc.covariance_xx(), acc.covariance_xy());
+    CHECK_THAT(acc.intercept(), Catch::Matchers::WithinAbs(beta, 1e-3));
+    CHECK_THAT(acc.slope(), grabin_test::Matchers::elementwise_within_abs(alpha, 1e-3));
 }

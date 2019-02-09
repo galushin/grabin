@@ -72,6 +72,7 @@ namespace statistics
         variance_accumulator() = default;
 
         /** @brief Конструктор с явным заданием нулевого элемента
+        @param zero нулевой элемент
         @post <tt>this->count() == 0</tt>
         @post <tt>this->mean() == zero</tt>
         @post <tt>this->variance() == prod(zero, zero)</tt>, где @c prod --
