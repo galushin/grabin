@@ -83,13 +83,15 @@ namespace linear_algebra
         for(auto n = max_iter; n > 0; --n)
         {
             auto r = A * x - b;
-            if(linear_algebra::inner_prod(r, r) < tol*tol)
+
+            auto lambda = linear_algebra::inner_prod(r, A*r)
+                        / linear_algebra::inner_prod(A*r, A*r);
+
+            if(linear_algebra::inner_prod(r, r) * lambda * lambda < tol*tol)
             {
                 break;
             }
 
-            auto lambda = linear_algebra::inner_prod(r, A*r)
-                        / linear_algebra::inner_prod(A*r, A*r);
             x -= lambda * r;
         }
 
@@ -102,6 +104,83 @@ namespace linear_algebra
         Vector operator()(Matrix const & A, Vector const & b) const
         {
             return grabin::linear_algebra::minimal_residue(A, b);
+        }
+    };
+
+    struct LU_solver
+    {
+        template <class Matrix, class Vector>
+        Vector operator()(Matrix const & A, Vector const & b) const
+        {
+            auto const n = A.dim1();
+
+            assert(b.dim() == n);
+            assert(A.dim2() == n);
+
+            // Находим LU-разложение
+            Matrix LU(n, n);
+
+            for(auto const & j : grabin::view::indices(n))
+            {
+                LU(0, j) = A(0, j);
+
+                if(j == 0)
+                {
+                    continue;
+                }
+
+                assert(LU(0, 0) != 0);
+                LU(j, 0) = A(j, 0) / LU(0, 0);
+            }
+
+            for(auto const & i : grabin::view::indices(static_cast<typename Matrix::size_type>(1), n))
+            {
+                for(auto const & j : grabin::view::indices(i, n))
+                {
+                    LU(i, j) = A(i, j);
+                    for(auto const & k : grabin::view::indices(i))
+                    {
+                        LU(i, j) -= LU(i, k) * LU(k, j);
+                    }
+
+                    if(j == i)
+                    {
+                        continue;
+                    }
+
+                    LU(j, i) = A(j, i);
+                    for(auto const & k : grabin::view::indices(i))
+                    {
+                        LU(j, i) -= LU(j, k) * LU(k, i);
+                    }
+                    LU(j, i) /= LU(i, i);
+                }
+            }
+
+            // Решаем Ly=b
+            Vector y = b;
+
+            for(auto const & i : grabin::view::indices(n))
+            {
+                for(auto const & j : grabin::view::indices(i))
+                {
+                    y[i] -= LU(i, j) * y[j];
+                }
+            }
+
+            // Решаем Ux=y
+            Vector x = y;
+
+            for(auto i = n; i > 0; -- i)
+            {
+                for(auto j = i; j < n; ++ j)
+                {
+                    x[i-1] -= LU(i-1, j) * x[j];
+                }
+                x[i-1] /= LU(i-1, i-1);
+            }
+
+            return x;
         }
     };
 }

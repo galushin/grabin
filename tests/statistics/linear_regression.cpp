@@ -208,7 +208,7 @@ TEST_CASE("linear regression multy-variable")
         using grabin::v1::statistics::linear_regression_accumulator;
         linear_regression_accumulator<Input, Counter, grabin::linear_algebra::inner_product,
                                       grabin::linear_algebra::outer_product,
-                                      grabin::linear_algebra::minimal_residue_solver>
+                                      grabin::linear_algebra::LU_solver>
             acc(zero);
 
         for(auto const & i : grabin::view::indices_of(xs))
@@ -217,10 +217,59 @@ TEST_CASE("linear regression multy-variable")
         }
 
         // Сравниваем с эталоном
-        CAPTURE(gamma, alpha, beta);
+        CAPTURE(sample_size, gamma, alpha, beta);
         REQUIRE_THAT(acc.intercept(), Catch::Matchers::WithinAbs(beta, 1e-3));
         REQUIRE_THAT(acc.slope(), grabin_test::Matchers::elementwise_within_abs(alpha, 1e-3));
     };
 
     grabin_test::check(property);
+}
+
+TEST_CASE("linear regression multy-variable: regression")
+{
+    using Output = double;
+    using Input = grabin::math_vector<double>;
+    using Counter = std::size_t;
+
+    auto const sample_size = 100;
+    auto const beta = -42.5605978118;
+    auto const alpha = Input{76.6734388259, 27.1004337164};
+
+    // Формируем выборку X
+    auto const gamma = -2.5101011538;
+    std::vector<Input> xs;
+
+    auto const n1 = static_cast<Counter>(std::sqrt(sample_size) + 2);
+    for(auto const & i : grabin::view::indices(n1))
+    for(auto const & j : grabin::view::indices(n1))
+    {
+        xs.push_back(Input{i, j + gamma * i});
+    }
+
+    // Формируем значения Y
+    std::vector<Output> ys;
+
+    for(auto const & x : xs)
+    {
+        ys.push_back(grabin::linear_algebra::inner_prod(alpha, x) + beta);
+    }
+
+    // Накапливаем наблюдения
+    auto const zero = Input(xs.front().dim());
+
+    using grabin::v1::statistics::linear_regression_accumulator;
+    linear_regression_accumulator<Input, Counter, grabin::linear_algebra::inner_product,
+                                  grabin::linear_algebra::outer_product,
+                                  grabin::linear_algebra::LU_solver>
+        acc(zero);
+
+    for(auto const & i : grabin::view::indices_of(xs))
+    {
+        acc(xs[i], ys[i]);
+    }
+
+    // Сравниваем с эталоном
+    CAPTURE(acc.covariance_xx(), acc.covariance_xy());
+    CHECK_THAT(acc.intercept(), Catch::Matchers::WithinAbs(beta, 1e-3));
+    CHECK_THAT(acc.slope(), grabin_test::Matchers::elementwise_within_abs(alpha, 1e-3));
 }

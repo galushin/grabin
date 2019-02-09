@@ -59,6 +59,8 @@ namespace statistics
     @todo Можно ли избавиться от дублирования счётчика в x_stat_ и y_stat_?
     @todo Возможность выводить тип операций в зависимости от типа X: default_inner_product_t<X> и т.д.
     @todo Сформулировать пост-условия конструкторов
+    @todo Обобщить операцию умножения входа и выхода? Иными словами, нужно ли предполагать, что
+    выходная переменная - это скаляр?
     */
     template <class X, class Count = use_default, class InnerProduct = use_default,
               class OuterProduct = use_default, class Solver = use_default>
@@ -82,6 +84,9 @@ namespace statistics
         @todo Более точное определение этого типа, это должно быть пространство, сопряжённое к X
         */
         using slope_type = X;
+
+        /// @brief Тип ковариации между выходной и входной переменными
+        using covariance_type = decltype(std::declval<intercept_type>() * std::declval<X>());
 
         // Создание, копирование, уничтожение
         /// @brief Конструктор без аргументов
@@ -127,7 +132,7 @@ namespace statistics
             }
 
             // @todo Что если x_stat_.variance() == 0? Покрыть этот случай тестом
-            return this->solver_(this->x_stat_.variance(), this->covariance());
+            return this->solver_(this->x_stat_.variance(), this->covariance_xy());
         }
 
         // Обновление
@@ -148,22 +153,7 @@ namespace statistics
             return *this;
         }
 
-    private:
-        using X_stat = grabin::statistics::variance_accumulator<X, count_type, outer_prod_type>;
-        using Y_stat = grabin::statistics::mean_accumulator<intercept_type, count_type>;
-        using covariance_type = decltype(std::declval<intercept_type>() * std::declval<X>());
-
-        using solver_type = grabin::replace_use_default_t<Solver, grabin::statistics::division_solver>;
-
-        inner_prod_type inner_prod_;
-        X_stat x_stat_;
-        Y_stat y_stat_;
-        covariance_type cov_sum_ = covariance_type(0);
-        solver_type solver_;
-
-        // @todo Возможно, эту операцию тоже следует обобщить?
-
-        covariance_type covariance() const
+        covariance_type covariance_xy() const
         {
             if(this->count() == 0)
             {
@@ -173,6 +163,27 @@ namespace statistics
 
             return this->cov_sum_ / this->count();
         }
+
+    private:
+        using X_stat = grabin::statistics::variance_accumulator<X, count_type, outer_prod_type>;
+
+    public:
+        typename X_stat::variance_type
+        covariance_xx() const
+        {
+            return this->x_stat_.variance();
+        }
+
+    private:
+        using Y_stat = grabin::statistics::mean_accumulator<intercept_type, count_type>;
+
+        using solver_type = grabin::replace_use_default_t<Solver, grabin::statistics::division_solver>;
+
+        inner_prod_type inner_prod_;
+        X_stat x_stat_;
+        Y_stat y_stat_;
+        covariance_type cov_sum_ = covariance_type(0);
+        solver_type solver_;
     };
 }
 // namespace statistics
