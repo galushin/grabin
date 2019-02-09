@@ -58,6 +58,7 @@ namespace statistics
         mean_accumulator() = default;
 
         /** @brief Конструктор с явным указанием нулевого элемента
+        @param zero нулевой элемент
         @post <tt> this->count() == 0 </tt>
         @post <tt> this->mean() == zero </tt>
         */

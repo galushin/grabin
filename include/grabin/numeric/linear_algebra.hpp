@@ -49,6 +49,23 @@ namespace linear_algebra
         return std::inner_product(x.begin(), x.end(), y.begin(), zero);
     }
 
+    /// @brief Тип функционального объекта, выполняющего внутреннее (скалярное) произведение
+    struct inner_product
+    {
+        /** @brief Скалярное произведение векторов
+        @param x, y аргументы
+        @pre <tt>x.dim() == y.dim()</tt>
+        @return <tt> std::inner_product(x.begin(), x.end(), y.begin(), zero)</tt>,
+        где <tt>zero == typename Vector::value_type(0)</tt>
+        */
+        template <class Vector>
+        typename Vector::value_type
+        operator()(Vector const & x, Vector const & y) const
+        {
+            return grabin::linear_algebra::inner_prod(x, y);
+        }
+    };
+
     /** @brief Решение СЛАУ методом минимизации невязки
     @param A матрица системы
     @param b вектор правой части
@@ -56,9 +73,9 @@ namespace linear_algebra
     @return Приближённое решение СЛАУ <tt>A*x == b</tt>
     */
     template <class Matrix, class Vector>
-    Vector minimal_residue(Matrix const & A, Vector b)
+    Vector minimal_residue(Matrix const & A, Vector const & b)
     {
-        double const tol = 1e-3;
+        double const tol = 1e-10;
         auto const max_iter = 100;
 
         Vector x(b.dim());
@@ -78,6 +95,15 @@ namespace linear_algebra
 
         return x;
     }
+
+    struct minimal_residue_solver
+    {
+        template <class Matrix, class Vector>
+        Vector operator()(Matrix const & A, Vector const & b) const
+        {
+            return grabin::linear_algebra::minimal_residue(A, b);
+        }
+    };
 }
 // namespace numeric
 }
