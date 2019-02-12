@@ -20,6 +20,8 @@ Grabin -- это свободной программное обеспечени�
 #include <catch2/catch.hpp>
 #include "../grabin_test.hpp"
 
+#include <grabin/algorithm.hpp>
+
 #include <cmath>
 
 TEST_CASE("matrix : types and default ctor")
@@ -208,7 +210,7 @@ TEST_CASE("matrix : non-const begin/end")
         std::copy(vec.begin(), vec.end(), x.begin());
 
         CAPTURE(vec, x_old, x);
-        CHECK(std::equal(x.begin(), x.end(), vec.begin(), vec.end()));
+        CHECK(grabin::equal(x, vec));
     };
 
     grabin_test::check(property);
@@ -241,7 +243,7 @@ TEST_CASE("matrix : equality")
         CHECK(x == x);
         CHECK(y == y);
 
-        if(std::equal(x.begin(), x.end(), y.begin(), y.end()))
+        if(grabin::equal(x, y))
         {
             CHECK(x == y);
             CHECK_FALSE(x != y);
@@ -311,7 +313,7 @@ TEST_CASE("matrix: multiplication by scalar")
         auto const rows = Size_generator::generate(rnd, generation);
         auto const cols = Size_generator::generate(rnd, generation);
         Matrix xs(rows+1, cols+1);
-        std::generate(xs.begin(), xs.end(), [&]{ return distr(rnd); });
+        grabin::generate(xs, [&]{ return distr(rnd); });
 
         property(xs, a);
     }
@@ -373,10 +375,10 @@ TEST_CASE("matrix: operator plus")
         auto const cols = Size_generator::generate(rnd, generation);
 
         Matrix xs(rows+1, cols+1);
-        std::generate(xs.begin(), xs.end(), [&]{ return distr(rnd); });
+        grabin::generate(xs, [&]{ return distr(rnd); });
 
         Matrix ys(rows+1, cols+1);
-        std::generate(ys.begin(), ys.end(), [&]{ return distr(rnd); });
+        grabin::generate(ys, [&]{ return distr(rnd); });
 
         property(xs, ys);
     }

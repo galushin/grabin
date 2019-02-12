@@ -20,6 +20,8 @@ Grabin -- это свободной программное обеспечение: вы можете перераспространять ее
 #include <catch2/catch.hpp>
 #include "../grabin_test.hpp"
 
+#include <grabin/numeric.hpp>
+
 TEST_CASE("range-for with indices")
 {
     using Container = std::vector<int>;
@@ -28,7 +30,7 @@ TEST_CASE("range-for with indices")
         using Index = Container::difference_type;
 
         std::vector<Index> ins_obj(xs.size());
-        std::iota(ins_obj.begin(), ins_obj.end(), Index(0));
+        grabin::iota(ins_obj, Index(0));
 
         std::vector<Index> ins;
         for(auto const & i : grabin::view::indices_of(xs))
@@ -50,7 +52,7 @@ TEST_CASE("counter_range")
         using Index = Container::difference_type;
 
         std::vector<Index> ins_obj(xs.size());
-        std::iota(ins_obj.begin(), ins_obj.end(), Index(0));
+        grabin::iota(ins_obj, Index(0));
 
         std::vector<Index> ins;
         for(auto const & i : grabin::view::indices_of(xs))

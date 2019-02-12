@@ -22,6 +22,7 @@ Grabin -- это свободной программное обеспечени�
  @brief Численные методы линейной алгебры
 */
 
+#include <grabin/numeric.hpp>
 #include <numeric>
 
 namespace grabin
@@ -46,7 +47,7 @@ namespace linear_algebra
         }
 
         auto const zero = typename Vector::value_type(0);
-        return std::inner_product(x.begin(), x.end(), y.begin(), zero);
+        return grabin::inner_product(x, y, zero);
     }
 
     /// @brief Тип функционального объекта, выполняющего внутреннее (скалярное) произведение

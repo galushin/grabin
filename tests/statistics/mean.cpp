@@ -20,6 +20,7 @@ Grabin -- это свободной программное обеспечени�
 #include "../grabin_test.hpp"
 #include <catch2/catch.hpp>
 
+#include <grabin/algorithm.hpp>
 #include <grabin/view/indices.hpp>
 
 #include <type_traits>
@@ -203,10 +204,10 @@ TEST_CASE("mean_accumulator : two math_vectorS")
         };
 
         grabin::math_vector<Element> xs(generation+1);
-        std::generate(xs.begin(), xs.end(), gen);
+        grabin::generate(xs, gen);
 
         grabin::math_vector<Element> ys(generation+1);
-        std::generate(ys.begin(), ys.end(), gen);
+        grabin::generate(ys, gen);
 
         property(xs, ys);
     }
@@ -268,10 +269,10 @@ TEST_CASE("mean_accumulator : two math_vector<int>S")
         };
 
         grabin::math_vector<Element> xs(generation+1);
-        std::generate(xs.begin(), xs.end(), gen);
+        grabin::generate(xs, gen);
 
         grabin::math_vector<Element> ys(generation+1);
-        std::generate(ys.begin(), ys.end(), gen);
+        grabin::generate(ys, gen);
 
         property(xs, ys);
     }

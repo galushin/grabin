@@ -32,9 +32,9 @@ OBJDIR_RELEASE = ./obj/Release
 DEP_RELEASE = 
 OUT_RELEASE = ./bin/Release/tests
 
-OBJ_DEBUG = $(OBJDIR_DEBUG)/grabin_test.o $(OBJDIR_DEBUG)/main.o $(OBJDIR_DEBUG)/math/math_vector.o $(OBJDIR_DEBUG)/math/matrix.o $(OBJDIR_DEBUG)/numeric/linear_algebra.o $(OBJDIR_DEBUG)/statistics/linear_regression.o $(OBJDIR_DEBUG)/statistics/mean.o $(OBJDIR_DEBUG)/statistics/variance.o $(OBJDIR_DEBUG)/utility/as_const.o $(OBJDIR_DEBUG)/view/indices.o
+OBJ_DEBUG = $(OBJDIR_DEBUG)/algorithm.o $(OBJDIR_DEBUG)/grabin_test.o $(OBJDIR_DEBUG)/main.o $(OBJDIR_DEBUG)/math/math_vector.o $(OBJDIR_DEBUG)/math/matrix.o $(OBJDIR_DEBUG)/numeric.o $(OBJDIR_DEBUG)/numeric/linear_algebra.o $(OBJDIR_DEBUG)/statistics/linear_regression.o $(OBJDIR_DEBUG)/statistics/mean.o $(OBJDIR_DEBUG)/statistics/variance.o $(OBJDIR_DEBUG)/utility/as_const.o $(OBJDIR_DEBUG)/view/indices.o
 
-OBJ_RELEASE = $(OBJDIR_RELEASE)/grabin_test.o $(OBJDIR_RELEASE)/main.o $(OBJDIR_RELEASE)/math/math_vector.o $(OBJDIR_RELEASE)/math/matrix.o $(OBJDIR_RELEASE)/numeric/linear_algebra.o $(OBJDIR_RELEASE)/statistics/linear_regression.o $(OBJDIR_RELEASE)/statistics/mean.o $(OBJDIR_RELEASE)/statistics/variance.o $(OBJDIR_RELEASE)/utility/as_const.o $(OBJDIR_RELEASE)/view/indices.o
+OBJ_RELEASE = $(OBJDIR_RELEASE)/algorithm.o $(OBJDIR_RELEASE)/grabin_test.o $(OBJDIR_RELEASE)/main.o $(OBJDIR_RELEASE)/math/math_vector.o $(OBJDIR_RELEASE)/math/matrix.o $(OBJDIR_RELEASE)/numeric.o $(OBJDIR_RELEASE)/numeric/linear_algebra.o $(OBJDIR_RELEASE)/statistics/linear_regression.o $(OBJDIR_RELEASE)/statistics/mean.o $(OBJDIR_RELEASE)/statistics/variance.o $(OBJDIR_RELEASE)/utility/as_const.o $(OBJDIR_RELEASE)/view/indices.o
 
 all: debug release
 
@@ -56,6 +56,9 @@ debug: before_debug out_debug after_debug
 out_debug: before_debug $(OBJ_DEBUG) $(DEP_DEBUG)
 	$(LD) $(LIBDIR_DEBUG) -o $(OUT_DEBUG) $(OBJ_DEBUG)  $(LDFLAGS_DEBUG) $(LIB_DEBUG)
 
+$(OBJDIR_DEBUG)/algorithm.o: algorithm.cpp
+	$(CXX) $(CFLAGS_DEBUG) $(INC_DEBUG) -c algorithm.cpp -o $(OBJDIR_DEBUG)/algorithm.o
+
 $(OBJDIR_DEBUG)/grabin_test.o: grabin_test.cpp
 	$(CXX) $(CFLAGS_DEBUG) $(INC_DEBUG) -c grabin_test.cpp -o $(OBJDIR_DEBUG)/grabin_test.o
 
@@ -67,6 +70,9 @@ $(OBJDIR_DEBUG)/math/math_vector.o: math/math_vector.cpp
 
 $(OBJDIR_DEBUG)/math/matrix.o: math/matrix.cpp
 	$(CXX) $(CFLAGS_DEBUG) $(INC_DEBUG) -c math/matrix.cpp -o $(OBJDIR_DEBUG)/math/matrix.o
+
+$(OBJDIR_DEBUG)/numeric.o: numeric.cpp
+	$(CXX) $(CFLAGS_DEBUG) $(INC_DEBUG) -c numeric.cpp -o $(OBJDIR_DEBUG)/numeric.o
 
 $(OBJDIR_DEBUG)/numeric/linear_algebra.o: numeric/linear_algebra.cpp
 	$(CXX) $(CFLAGS_DEBUG) $(INC_DEBUG) -c numeric/linear_algebra.cpp -o $(OBJDIR_DEBUG)/numeric/linear_algebra.o
@@ -112,6 +118,9 @@ release: before_release out_release after_release
 out_release: before_release $(OBJ_RELEASE) $(DEP_RELEASE)
 	$(LD) $(LIBDIR_RELEASE) -o $(OUT_RELEASE) $(OBJ_RELEASE)  $(LDFLAGS_RELEASE) $(LIB_RELEASE)
 
+$(OBJDIR_RELEASE)/algorithm.o: algorithm.cpp
+	$(CXX) $(CFLAGS_RELEASE) $(INC_RELEASE) -c algorithm.cpp -o $(OBJDIR_RELEASE)/algorithm.o
+
 $(OBJDIR_RELEASE)/grabin_test.o: grabin_test.cpp
 	$(CXX) $(CFLAGS_RELEASE) $(INC_RELEASE) -c grabin_test.cpp -o $(OBJDIR_RELEASE)/grabin_test.o
 
@@ -123,6 +132,9 @@ $(OBJDIR_RELEASE)/math/math_vector.o: math/math_vector.cpp
 
 $(OBJDIR_RELEASE)/math/matrix.o: math/matrix.cpp
 	$(CXX) $(CFLAGS_RELEASE) $(INC_RELEASE) -c math/matrix.cpp -o $(OBJDIR_RELEASE)/math/matrix.o
+
+$(OBJDIR_RELEASE)/numeric.o: numeric.cpp
+	$(CXX) $(CFLAGS_RELEASE) $(INC_RELEASE) -c numeric.cpp -o $(OBJDIR_RELEASE)/numeric.o
 
 $(OBJDIR_RELEASE)/numeric/linear_algebra.o: numeric/linear_algebra.cpp
 	$(CXX) $(CFLAGS_RELEASE) $(INC_RELEASE) -c numeric/linear_algebra.cpp -o $(OBJDIR_RELEASE)/numeric/linear_algebra.o
