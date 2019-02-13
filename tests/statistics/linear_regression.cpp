@@ -191,7 +191,9 @@ TEST_CASE("linear regression multy-variable")
         for(auto const & i : grabin::view::indices(n1))
         for(auto const & j : grabin::view::indices(n1))
         {
-            xs.push_back(Input{i, j + gamma * i});
+            auto const x1 = static_cast<double>(i);
+            auto const x2 = static_cast<double>(j + gamma * i);
+            xs.push_back(Input{x1, x2});
         }
 
         // Формируем значения Y
@@ -243,7 +245,9 @@ TEST_CASE("linear regression multy-variable: regression")
     for(auto const & i : grabin::view::indices(n1))
     for(auto const & j : grabin::view::indices(n1))
     {
-        xs.push_back(Input{i, j + gamma * i});
+        auto const x1 = static_cast<double>(i);
+        auto const x2 = static_cast<double>(j + gamma * i);
+        xs.push_back(Input{x1, x2});
     }
 
     // Формируем значения Y

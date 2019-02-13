@@ -69,7 +69,7 @@ namespace statistics
     public:
         // Типы
         /// @brief Тип для представления количества элементов
-        using count_type = grabin::replace_use_default_t<Count, std::intmax_t>;
+        using count_type = grabin::replace_use_default_t<Count, std::ptrdiff_t>;
 
         /// @brief Тип функционального объекта, вычисляющего скалярное произведение
         using inner_prod_type = grabin::replace_use_default_t<InnerProduct, std::multiplies<>>;
