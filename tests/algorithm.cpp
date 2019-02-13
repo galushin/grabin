@@ -15,52 +15,49 @@ Grabin -- это свободной программное обеспечени�
 обеспечение. Если это не так, см. https://www.gnu.org/licenses/.
 */
 
-#ifndef Z_GRABIN_OPERATORS_HPP_INCLUDED
-#define Z_GRABIN_OPERATORS_HPP_INCLUDED
-
-/** @file grabin/operators.hpp
- @brief Упрощение определения операторов
-*/
-
-#include <grabin/utility/rel_ops.hpp>
-
 #include <grabin/algorithm.hpp>
 
-namespace grabin
+#include <catch2/catch.hpp>
+#include "../grabin_test.hpp"
+
+#include <forward_list>
+
+TEST_CASE("generate")
 {
-inline namespace v1
-{
-namespace operators
-{
-/// @brief Определение операторов "равно" и "не равно" для контейнеров
-namespace container_equality
-{
-    /** @brief Тип-тэг, наследование от которого импортирует операторы из
-    данного пространства имён
-    */
-    struct enable_adl
-     : grabin::rel_ops::enable_adl
+    auto property = [](std::forward_list<int> const & xs_old)
     {
-    protected:
-        ~enable_adl() = default;
+        auto const xs_std = [&]
+        {
+            auto xs = xs_old;
+            int value = -5;
+            auto gen = [&] { return value++;};
+            std::generate(xs.begin(), xs.end(), gen);
+            return xs;
+        }();
+
+        auto const xs_grabin = [&]
+        {
+            auto xs = xs_old;
+            int value = -5;
+            auto gen = [&] { return value++;};
+            grabin::generate(xs, gen);
+            return xs;
+        }();
+
+        CHECK(xs_grabin == xs_std);
     };
 
-    /** @brief Оператор "равно"
-    @param x,y аргументы
-    @return <tt> grabin::equal(x, y) </tt>
-    */
-    template <class Container>
-    bool operator==(Container const & x, Container const & y)
-    {
-        return grabin::equal(x, y);
-    }
+    grabin_test::check(property);
 }
-}
-// namespace operators
-}
-// namespace v1
-}
-// namespace grabin
 
-#endif
-// Z_GRABIN_OPERATORS_HPP_INCLUDED
+TEST_CASE("equal")
+{
+    auto property = [](std::forward_list<int> const & xs, std::list<int> const & ys)
+    {
+        CAPTURE(xs, ys);
+
+        CHECK(grabin::equal(xs, ys) == std::equal(xs.begin(), xs.end(), ys.begin(), ys.end()));
+    };
+
+    grabin_test::check(property);
+}

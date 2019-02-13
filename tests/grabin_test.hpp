@@ -21,6 +21,8 @@ Grabin -- это свободной программное обеспечени�
 #include <catch2/catch.hpp>
 
 #include <ctime>
+#include <forward_list>
+#include <list>
 #include <random>
 #include <tuple>
 #include <utility>
@@ -114,7 +116,20 @@ namespace grabin_test
     };
 
     template <class Container>
-    struct ArbitraryContainer;
+    struct ArbitraryContainer
+    {
+        using value_type = Container;
+
+        template <class Engine>
+        static value_type generate(Engine & rnd, generation_t generation)
+        {
+            using Elem = typename value_type::value_type;
+            auto src = ArbitraryContainer<std::vector<Elem>>::generate(rnd, generation);
+
+            // @todo Использовать move-итераторы?
+            return value_type(src.begin(), src.end());
+        }
+    };
 
     template <class T, class A>
     struct ArbitraryContainer<std::vector<T, A>>
@@ -180,6 +195,16 @@ namespace grabin_test
     template <class T, class A>
     struct Arbitrary<std::vector<T, A>>
      : ArbitraryContainer<std::vector<T, A>>
+    {};
+
+    template <class T, class A>
+    struct Arbitrary<std::forward_list<T, A>>
+     : ArbitraryContainer<std::forward_list<T, A>>
+    {};
+
+    template <class T, class A>
+    struct Arbitrary<std::list<T, A>>
+     : ArbitraryContainer<std::list<T, A>>
     {};
 
     // Проверка свойств

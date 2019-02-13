@@ -18,6 +18,8 @@ Grabin -- это свободной программное обеспечени�
 #include <grabin/math/matrix.hpp>
 #include <grabin/numeric/linear_algebra.hpp>
 
+#include <grabin/algorithm.hpp>
+
 #include <catch2/catch.hpp>
 #include "../grabin_test.hpp"
 
@@ -52,8 +54,8 @@ TEST_CASE("matrix-vector product")
     std::uniform_int_distribution<Value> distr(-20, 20);
     auto gen = [&]{ return distr(grabin_test::random_engine()); };
 
-    std::generate(A.begin(), A.end(), gen);
-    std::generate(x.begin(), x.end(), gen);
+    grabin::generate(A, gen);
+    grabin::generate(x, gen);
 
     auto const y = A * x;
 
@@ -77,7 +79,7 @@ TEST_CASE("minres solver")
 
     std::uniform_real_distribution<Value> distr(-10, 10);
     auto gen = [&]{ return distr(grabin_test::random_engine()); };
-    std::generate(x.begin(), x.end(), gen);
+    grabin::generate(x, gen);
 
     auto const b = A*x;
 

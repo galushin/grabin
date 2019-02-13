@@ -15,52 +15,49 @@ Grabin -- это свободной программное обеспечени�
 обеспечение. Если это не так, см. https://www.gnu.org/licenses/.
 */
 
-#ifndef Z_GRABIN_OPERATORS_HPP_INCLUDED
-#define Z_GRABIN_OPERATORS_HPP_INCLUDED
+#ifndef Z_GRABIN_NUMERIC_HPP_INCLUDED
+#define Z_GRABIN_NUMERIC_HPP_INCLUDED
 
-/** @file grabin/operators.hpp
- @brief Упрощение определения операторов
+/** @file grabin/numeric.hpp
+ @brief Обобщённые численные операции
 */
 
-#include <grabin/utility/rel_ops.hpp>
-
-#include <grabin/algorithm.hpp>
+#include <iterator>
+#include <numeric>
 
 namespace grabin
 {
 inline namespace v1
 {
-namespace operators
-{
-/// @brief Определение операторов "равно" и "не равно" для контейнеров
-namespace container_equality
-{
-    /** @brief Тип-тэг, наследование от которого импортирует операторы из
-    данного пространства имён
+    /** @brief Присваивает элементам последовательности последовательные значения, начиная с @c init
+    @param seq последовательность
+    @param init начальное значение
     */
-    struct enable_adl
-     : grabin::rel_ops::enable_adl
+    template <class ForwardSequence, class T>
+    void iota(ForwardSequence && seq, T init)
     {
-    protected:
-        ~enable_adl() = default;
-    };
-
-    /** @brief Оператор "равно"
-    @param x,y аргументы
-    @return <tt> grabin::equal(x, y) </tt>
-    */
-    template <class Container>
-    bool operator==(Container const & x, Container const & y)
-    {
-        return grabin::equal(x, y);
+        using std::begin;
+        using std::end;
+        std::iota(begin(seq), end(seq), std::move(init));
     }
-}
-}
-// namespace operators
+
+    /** @brief Перемножает соответствующие элементы двух последовательностей, а результаты
+    последовательно прибавляет к @c init
+    @param in1, in2 входные последовательности
+    @param init исходное значение
+    @pre <tt>size(in1) >= size(in2)</tt>
+    */
+    template <class InputSequence1, class InputSequence2, class T>
+    T inner_product(InputSequence1 && in1, InputSequence2 && in2, T init)
+    {
+        using std::begin;
+        using std::end;
+        return std::inner_product(begin(in1), end(in1), begin(in2), std::move(init));
+    }
 }
 // namespace v1
 }
 // namespace grabin
 
-#endif
-// Z_GRABIN_OPERATORS_HPP_INCLUDED
+
+#endif // Z_GRABIN_NUMERIC_HPP_INCLUDED

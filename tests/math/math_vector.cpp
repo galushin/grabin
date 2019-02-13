@@ -20,6 +20,7 @@ Grabin -- это свободной программное обеспечени�
 #include <catch2/catch.hpp>
 #include "../grabin_test.hpp"
 
+#include <grabin/algorithm.hpp>
 #include <grabin/view/indices.hpp>
 
 namespace grabin_test
@@ -118,7 +119,7 @@ TEST_CASE("math_vector : range ctor")
         CHECK(xs.dim() == values.size());
 
         CAPTURE(values, xs);
-        CHECK(std::equal(xs.begin(), xs.end(), values.begin(), values.end()));
+        CHECK(grabin::equal(xs, values));
     };
 
     grabin_test::check(property);
@@ -166,7 +167,7 @@ TEST_CASE("math_vector : equality")
         CHECK(x == x);
         CHECK(y == y);
 
-        if(std::equal(x.begin(), x.end(), y.begin(), y.end()))
+        if(grabin::equal(x, y))
         {
             CHECK(x == y);
             CHECK_FALSE(x != y);
@@ -336,8 +337,7 @@ TEST_CASE("math_vector: non-const indexing")
 
         grabin::math_vector<Value> xs(generation+1);
         std::uniform_int_distribution<Value> distr(0, generation);
-        std::generate(xs.begin(), xs.end(),
-                      [&]{ return grabin_test::Arbitrary<Value>::generate(rnd, distr(rnd)); });
+        grabin::generate(xs, [&]{ return grabin_test::Arbitrary<Value>::generate(rnd, distr(rnd)); });
 
         auto const value = grabin_test::Arbitrary<Value>::generate(rnd, generation);
         auto const index = std::uniform_int_distribution<Vector::size_type>(0, xs.dim()-1)(rnd);
@@ -405,8 +405,7 @@ TEST_CASE("math_vector: non-const at")
 
         Vector xs(generation+1);
         std::uniform_int_distribution<Value> distr(0, generation);
-        std::generate(xs.begin(), xs.end(),
-                      [&]{ return grabin_test::Arbitrary<Value>::generate(rnd, distr(rnd)); });
+        grabin::generate(xs, [&]{ return grabin_test::Arbitrary<Value>::generate(rnd, distr(rnd)); });
 
         auto const value = grabin_test::Arbitrary<Value>::generate(rnd, generation);
         auto const index = std::uniform_int_distribution<Vector::size_type>(0, xs.dim()-1)(rnd);
@@ -463,7 +462,7 @@ TEST_CASE("math_vector: multiplication by scalar")
         auto const a = distr(rnd);
 
         grabin::math_vector<Value> xs(generation+1);
-        std::generate(xs.begin(), xs.end(), [&]{ return distr(rnd); });
+        grabin::generate(xs, [&]{ return distr(rnd); });
 
         property(xs, a);
     }
@@ -532,7 +531,7 @@ TEST_CASE("math_vector: division by non-zero")
         auto const a = distr(rnd);
 
         grabin::math_vector<Value> xs(generation+1);
-        std::generate(xs.begin(), xs.end(), [&]{ return distr(rnd); });
+        grabin::generate(xs, [&]{ return distr(rnd); });
 
         property(xs, a);
     }
@@ -583,10 +582,10 @@ TEST_CASE("math_vector: operator plus")
         std::uniform_int_distribution<Value> distr(-1000, +1000);
 
         grabin::math_vector<Value> xs(generation+1);
-        std::generate(xs.begin(), xs.end(), [&]{ return distr(rnd); });
+        grabin::generate(xs, [&]{ return distr(rnd); });
 
         grabin::math_vector<Value> ys(generation+1);
-        std::generate(ys.begin(), ys.end(), [&]{ return distr(rnd); });
+        grabin::generate(ys, [&]{ return distr(rnd); });
 
         property(xs, ys);
     }
