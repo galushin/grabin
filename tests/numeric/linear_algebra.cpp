@@ -88,3 +88,65 @@ TEST_CASE("minres solver")
     auto const eps = 1e-3;
     CHECK_THAT(x0, grabin_test::Matchers::elementwise_within_abs(x, eps));
 }
+
+TEST_CASE("LU-solver: simplest queueing system")
+{
+    using Matrix = grabin::matrix<double>;
+    using Vector = grabin::math_vector<double>;
+
+    auto & rnd = grabin_test::random_engine();
+    std::uniform_real_distribution<double> distr(0.1, 10);
+
+    for(auto n = 1; n < 15; ++ n)
+    {
+        auto const mu = distr(rnd);
+        auto const nu = distr(rnd);
+
+        // Составляем систему уравнений
+        Matrix Lambda(n+1, n+1);
+
+        Lambda(0, 0) = mu;
+        Lambda(0, 1) = - nu;
+
+        for(auto i : grabin::view::indices<Matrix::size_type>(1, n))
+        {
+            Lambda(i,i) = mu + nu;
+            Lambda(i,i-1) = -mu;
+            Lambda(i,i+1) = -nu;
+        }
+
+        for(auto i : grabin::view::indices(n+1))
+        {
+            Lambda(n, i) = 1;
+        }
+
+        Vector b(n+1, 0);
+        b[n] = 1;
+
+        // Решаем систему
+        auto const P = grabin::linear_algebra::LU_solver{}(Lambda, b);
+
+        // Находим вероятности по формулам
+        auto const alpha = mu / nu;
+
+        Vector P1(n+1);
+
+        if(std::abs(alpha - 1) < 1e-3)
+        {
+            P1[0] = 1.0 / (n+1);
+        }
+        else
+        {
+            P1[0] = (1 - alpha) / (1 - std::pow(alpha, n+1));
+        }
+
+        for(auto const & i : grabin::view::indices(n))
+        {
+            P1[i+1] = alpha * P1[i];
+        }
+
+        // Сравниваем решения
+        CAPTURE(Lambda, b, alpha);
+        CHECK_THAT(P, grabin_test::Matchers::elementwise_within_abs(P1, 1e-6));
+    }
+}
