@@ -105,14 +105,14 @@ TEST_CASE("LU-solver: simplest queueing system")
         // Составляем систему уравнений
         Matrix Lambda(n+1, n+1);
 
-        Lambda(0, 0) = mu;
-        Lambda(0, 1) = - nu;
+        Lambda(0, 0) = - mu;
+        Lambda(0, 1) = nu;
 
         for(auto i : grabin::view::indices<Matrix::size_type>(1, n))
         {
-            Lambda(i,i) = mu + nu;
-            Lambda(i,i-1) = -mu;
-            Lambda(i,i+1) = -nu;
+            Lambda(i,i) = - (mu + nu);
+            Lambda(i,i-1) = mu;
+            Lambda(i,i+1) = nu;
         }
 
         for(auto i : grabin::view::indices(n+1))
@@ -148,5 +148,66 @@ TEST_CASE("LU-solver: simplest queueing system")
         // Сравниваем решения
         CAPTURE(Lambda, b, alpha);
         CHECK_THAT(P, grabin_test::Matchers::elementwise_within_abs(P1, 1e-6));
+    }
+}
+
+TEST_CASE("LU-solver: many processors, one bus")
+{
+    using Matrix = grabin::matrix<double>;
+    using Vector = grabin::math_vector<double>;
+
+    auto & rnd = grabin_test::random_engine();
+    std::uniform_real_distribution<double> distr(0.1, 10);
+
+    for(auto n = 1; n < 15; ++ n)
+    {
+        auto const mu = distr(rnd);
+        auto const nu = distr(rnd);
+
+        // Составляем систему уравнений
+        Matrix Lambda(n+1, n+1);
+
+        Lambda(0, 0) = -n*mu;
+        Lambda(0, 1) = nu;
+
+        for(auto i : grabin::view::indices<Matrix::size_type>(1, n))
+        {
+            Lambda(i,i-1) = mu * (n - i + 1);
+            Lambda(i,i)   = - (nu + mu * (n - i));
+            Lambda(i,i+1) = nu;
+        }
+
+        for(auto i : grabin::view::indices(n+1))
+        {
+            Lambda(n, i) = 1;
+        }
+
+        Vector b(n+1, 0);
+        b[n] = 1;
+
+        // Решаем систему
+        auto const P = grabin::linear_algebra::LU_solver{}(Lambda, b);
+
+        // Находим вероятности по формулам
+        auto const alpha = mu / nu;
+
+        Vector P1(n+1);
+
+        P1[0] = 1;
+
+        for(auto const & i : grabin::view::indices(n))
+        {
+            P1[i+1] = alpha * (n - i) * P1[i];
+        }
+
+        auto const P1_sum = std::accumulate(P1.begin(), P1.end(), 0 * P1[0]);
+        for(auto & p : P1)
+        {
+            p /= P1_sum;
+        }
+
+        // Сравниваем решения
+        CAPTURE(Lambda, b, alpha);
+        REQUIRE_THAT(P, grabin_test::Matchers::elementwise_within_abs(P1, 1e-6));
     }
 }
