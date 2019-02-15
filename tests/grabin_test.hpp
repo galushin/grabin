@@ -309,6 +309,51 @@ namespace Matchers
 }
 // namespace grabin_test
 
+#include <sstream>
+#include <grabin/math/matrix.hpp>
+
+namespace Catch
+{
+
+    template <class T, class Check>
+    struct is_range<grabin::matrix<T, Check>>
+     : std::false_type
+    {};
+
+    template <class T, class Check>
+    struct StringMaker<grabin::matrix<T, Check>>
+    {
+        static std::string convert(grabin::matrix<T, Check> const & value)
+        {
+            std::ostringstream os;
+
+            os << "{";
+            for(auto i : grabin::view::indices(value.dim1()))
+            {
+                if(i != 0)
+                {
+                    os << ", ";
+                }
+
+                os << "{ ";
+                for(auto j : grabin::view::indices(value.dim2()))
+                {
+                    if(j != 0)
+                    {
+                        os << ", ";
+                    }
+                    os << value(i, j);
+                }
+                os << " }";
+            }
+            os << "}";
+
+            return os.str();
+        }
+    };
+}
+// namespace Catch
+
 
 #endif
 // Z_GRABIN_TEST_HPP_INCLUDED

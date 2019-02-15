@@ -201,6 +201,8 @@ TEST_CASE("LU-solver: many processors, one bus")
         }
 
         auto const P1_sum = std::accumulate(P1.begin(), P1.end(), 0 * P1[0]);
+        REQUIRE(std::abs(P1_sum) > 1e-10);
+
         for(auto & p : P1)
         {
             p /= P1_sum;
