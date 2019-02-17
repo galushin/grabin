@@ -45,6 +45,7 @@
 		<Unit filename="../include/grabin/statistics/linear_regression.hpp" />
 		<Unit filename="../include/grabin/statistics/mean.hpp" />
 		<Unit filename="../include/grabin/statistics/variance.hpp" />
+		<Unit filename="../include/grabin/stochastic/all.hpp" />
 		<Unit filename="../include/grabin/utility/as_const.hpp" />
 		<Unit filename="../include/grabin/utility/rel_ops.hpp" />
 		<Unit filename="../include/grabin/utility/use_default.hpp" />

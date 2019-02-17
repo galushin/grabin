@@ -89,6 +89,8 @@ TEST_CASE("minres solver")
     CHECK_THAT(x0, grabin_test::Matchers::elementwise_within_abs(x, eps));
 }
 
+#include <grabin/stochastic/all.hpp>
+
 TEST_CASE("LU-solver: simplest queueing system")
 {
     using Matrix = grabin::matrix<double>;
@@ -99,35 +101,25 @@ TEST_CASE("LU-solver: simplest queueing system")
 
     for(auto n = 1; n < 15; ++ n)
     {
-        auto const mu = distr(rnd);
-        auto const nu = distr(rnd);
+        auto const nu_order = distr(rnd);
+        auto const nu_service = distr(rnd);
 
         // Составляем систему уравнений
-        Matrix Lambda(n+1, n+1);
+        Matrix lambda(n+1, n+1);
 
-        Lambda(0, 0) = - mu;
-        Lambda(0, 1) = nu;
-
-        for(auto i : grabin::view::indices<Matrix::size_type>(1, n))
+        lambda(0, 1) = nu_order;
+        for(auto i : grabin::view::indices(n-1))
         {
-            Lambda(i,i) = - (mu + nu);
-            Lambda(i,i-1) = mu;
-            Lambda(i,i+1) = nu;
+            lambda(i+1, i) = nu_service;
+            lambda(i+1, i+2) = nu_order;
         }
-
-        for(auto i : grabin::view::indices(n+1))
-        {
-            Lambda(n, i) = 1;
-        }
-
-        Vector b(n+1, 0);
-        b[n] = 1;
+        lambda(n, n-1) = nu_service;
 
         // Решаем систему
-        auto const P = grabin::linear_algebra::LU_solver{}(Lambda, b);
+        auto const P = grabin::stochastic::ctmc_stationary(lambda);
 
         // Находим вероятности по формулам
-        auto const alpha = mu / nu;
+        auto const alpha = nu_order / nu_service;
 
         Vector P1(n+1);
 
@@ -146,7 +138,7 @@ TEST_CASE("LU-solver: simplest queueing system")
         }
 
         // Сравниваем решения
-        CAPTURE(Lambda, b, alpha);
+        CAPTURE(lambda, alpha);
         CHECK_THAT(P, grabin_test::Matchers::elementwise_within_abs(P1, 1e-6));
     }
 }
@@ -161,35 +153,25 @@ TEST_CASE("LU-solver: many processors, one bus")
 
     for(auto n = 1; n < 15; ++ n)
     {
-        auto const mu = distr(rnd);
-        auto const nu = distr(rnd);
+        auto const nu_order = distr(rnd);
+        auto const nu_service = distr(rnd);
 
         // Составляем систему уравнений
-        Matrix Lambda(n+1, n+1);
+        Matrix lambda(n+1, n+1);
 
-        Lambda(0, 0) = -n*mu;
-        Lambda(0, 1) = nu;
-
-        for(auto i : grabin::view::indices<Matrix::size_type>(1, n))
+        lambda(0, 1) = n*nu_order;
+        for(auto i : grabin::view::indices(n-1))
         {
-            Lambda(i,i-1) = mu * (n - i + 1);
-            Lambda(i,i)   = - (nu + mu * (n - i));
-            Lambda(i,i+1) = nu;
+            lambda(i+1, i) = nu_service;
+            lambda(i+1, i+2) = (n - i - 1) * nu_order;
         }
-
-        for(auto i : grabin::view::indices(n+1))
-        {
-            Lambda(n, i) = 1;
-        }
-
-        Vector b(n+1, 0);
-        b[n] = 1;
+        lambda(n, n-1) = nu_service;
 
         // Решаем систему
-        auto const P = grabin::linear_algebra::LU_solver{}(Lambda, b);
+        auto const P = grabin::stochastic::ctmc_stationary(lambda);
 
         // Находим вероятности по формулам
-        auto const alpha = mu / nu;
+        auto const alpha = nu_order / nu_service;
 
         Vector P1(n+1);
 
@@ -209,7 +191,7 @@ TEST_CASE("LU-solver: many processors, one bus")
         }
 
         // Сравниваем решения
-        CAPTURE(Lambda, b, alpha);
+        CAPTURE(lambda, alpha);
         REQUIRE_THAT(P, grabin_test::Matchers::elementwise_within_abs(P1, 1e-6));
     }
 }
