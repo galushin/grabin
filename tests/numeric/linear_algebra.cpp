@@ -122,19 +122,19 @@ TEST_CASE("LU-solver: simplest queueing system")
         auto const alpha = nu_order / nu_service;
 
         Vector P1(n+1);
-
-        if(std::abs(alpha - 1) < 1e-3)
-        {
-            P1[0] = 1.0 / (n+1);
-        }
-        else
-        {
-            P1[0] = (1 - alpha) / (1 - std::pow(alpha, n+1));
-        }
+        P1[0] = 1.0;
 
         for(auto const & i : grabin::view::indices(n))
         {
             P1[i+1] = alpha * P1[i];
+        }
+
+        auto const P1_sum = std::accumulate(P1.begin(), P1.end(), 0 * P1[0]);
+        REQUIRE(std::abs(P1_sum) > 1e-10);
+
+        for(auto & p : P1)
+        {
+            p /= P1_sum;
         }
 
         // Сравниваем решения
