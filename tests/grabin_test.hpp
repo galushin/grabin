@@ -290,7 +290,7 @@ namespace Matchers
 
         std::string describe() const override
         {
-            return "is within " + ::Catch::Detail::stringify(this->eps_) + " of "
+            return "\nis within " + ::Catch::Detail::stringify(this->eps_) + " of\n"
                    + ::Catch::Detail::stringify(this->target_);
         }
 
