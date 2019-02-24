@@ -196,6 +196,8 @@ TEST_CASE("LU-solver: many processors, one bus")
     }
 }
 
+#include <cmath>
+
 TEST_CASE("LU-solver: many processors, many bus")
 {
     using Real = long double;
@@ -243,6 +245,7 @@ TEST_CASE("LU-solver: many processors, many bus")
             return 1 + (k - 1) * (2 * n_cpu + 2 - k) / 2 + l;
         };
 
+        using std::pow;
         for(auto k : grabin::view::indices(h+1))
         for(auto l : grabin::view::indices(max_index_2(k) + 1))
         {
