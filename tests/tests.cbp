@@ -53,6 +53,8 @@
 		<Unit filename="algorithm.cpp" />
 		<Unit filename="grabin_test.cpp" />
 		<Unit filename="grabin_test.hpp" />
+		<Unit filename="istream_sequence.cpp" />
+		<Unit filename="istream_sequence.hpp" />
 		<Unit filename="main.cpp" />
 		<Unit filename="math/math_vector.cpp" />
 		<Unit filename="math/matrix.cpp" />
