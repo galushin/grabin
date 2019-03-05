@@ -19,8 +19,83 @@ Grabin -- это свободной программное обеспечени�
 
 #include <catch2/catch.hpp>
 #include "../grabin_test.hpp"
+#include "../istream_sequence.hpp"
 
 #include <forward_list>
+
+TEST_CASE("algorithm: logical quantors")
+{
+    using IntType = int;
+    auto property = [](std::vector<IntType> const & src)
+    {
+        grabin_test::istream_sequence<IntType> xs_std(src.begin(), src.end());
+        grabin_test::istream_sequence<IntType> xs_grabin(src.begin(), src.end());
+
+        auto pred = [](IntType const & x) { return x % 2 == 0; };
+
+        CHECK(std::all_of(xs_std.begin(), xs_std.end(), pred) ==
+              grabin::all_of(xs_grabin, pred));
+        CHECK(std::any_of(xs_std.begin(), xs_std.end(), pred) ==
+              grabin::any_of(xs_grabin, pred));
+        CHECK(std::none_of(xs_std.begin(), xs_std.end(), pred) ==
+              grabin::none_of(xs_grabin, pred));
+    };
+
+    grabin_test::check(property);
+}
+
+TEST_CASE("algorithm: count_if")
+{
+    using IntType = int;
+    auto property = [](std::vector<IntType> const & src)
+    {
+        grabin_test::istream_sequence<IntType> xs_std(src.begin(), src.end());
+        grabin_test::istream_sequence<IntType> xs_grabin(src.begin(), src.end());
+
+        auto pred = [](IntType const & x) { return x % 2 == 0; };
+
+        CHECK(std::count_if(xs_std.begin(), xs_std.end(), pred) ==
+              grabin::count_if(xs_grabin, pred));
+    };
+
+    grabin_test::check(property);
+}
+
+TEST_CASE("algorithm: count")
+{
+    using IntType = int;
+    auto property = [](std::vector<IntType> const & src, IntType const & value)
+    {
+        grabin_test::istream_sequence<IntType> xs_std(src.begin(), src.end());
+        grabin_test::istream_sequence<IntType> xs_grabin(src.begin(), src.end());
+
+        CHECK(std::count(xs_std.begin(), xs_std.end(), value) ==
+              grabin::count(xs_grabin, value));
+    };
+
+    grabin_test::check(property);
+}
+
+TEST_CASE("algorithm: count, front element")
+{
+    using IntType = int;
+    auto property = [](std::vector<IntType> const & src)
+    {
+        if(src.empty())
+        {
+            return;
+        }
+
+        auto const & value = src.front();
+        grabin_test::istream_sequence<IntType> xs_std(src.begin(), src.end());
+        grabin_test::istream_sequence<IntType> xs_grabin(src.begin(), src.end());
+
+        CHECK(std::count(xs_std.begin(), xs_std.end(), value) ==
+              grabin::count(xs_grabin, value));
+    };
+
+    grabin_test::check(property);
+}
 
 TEST_CASE("generate")
 {

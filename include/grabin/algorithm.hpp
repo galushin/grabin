@@ -29,6 +29,78 @@ namespace grabin
 {
 inline namespace v1
 {
+    /** @brief Проверка, что все элементы интервала удовлетворяют заданному
+    предикату
+    @param input входной интервал
+    @param pred унарный предикат
+    @return @b true, если для каждого элемента @c x интервала @c input
+    выполняется <tt>pred(x) != false</tt>, иначе -- @b false
+    */
+    template <class InputRange, class UnaryPredicate>
+    bool all_of(InputRange && input, UnaryPredicate pred)
+    {
+        using std::begin;
+        using std::end;
+        return std::all_of(begin(input), end(input), std::move(pred));
+    }
+
+    /** @brief Проверка, что некоторый элемент интервала удовлетворяют заданному
+    предикату
+    @param input входной интервал
+    @param pred унарный предикат
+    @return @b true, если для некоторого элемента @c x интервала @c input
+    выполняется <tt>pred(x) != false</tt>, иначе -- @b false
+    */
+    template <class InputRange, class UnaryPredicate>
+    bool any_of(InputRange && input, UnaryPredicate pred)
+    {
+        using std::begin;
+        using std::end;
+        return std::any_of(begin(input), end(input), std::move(pred));
+    }
+
+    /** @brief Проверка, что ни один элемент интервала не удовлетворяют
+    заданному предикату
+    @param input входной интервал
+    @param pred унарный предикат
+    @return @b true, если ни для одного элемента @c x интервала @c input
+    не выполняется <tt>pred(x) != false</tt>, иначе -- @b false
+    */
+    template <class InputRange, class UnaryPredicate>
+    bool none_of(InputRange && input, UnaryPredicate pred)
+    {
+        using std::begin;
+        using std::end;
+        return std::none_of(begin(input), end(input), std::move(pred));
+    }
+
+    /** @brief Подсчёт количества элементов, равных заданному значению
+    @param input входной интервал
+    @param value искомое значение
+    @return Количество элементов интервала @c input, равных значению @c value
+    */
+    template <class InputRange, class T>
+    auto count(InputRange && input, T const & value)
+    {
+        using std::begin;
+        using std::end;
+        return std::count(begin(input), end(input), value);
+    }
+
+    /** @brief Подсчёт количества элементов, удовлетворяющих заданному предикату
+    @param input входной интервал
+    @param pred унарный предикат
+    @return Количество элементов интервала @c input, удовлетворяющих предикату
+    @c pred
+    */
+    template <class InputRange, class UnaryPredicate>
+    auto count_if(InputRange && input, UnaryPredicate pred)
+    {
+        using std::begin;
+        using std::end;
+        return std::count_if(begin(input), end(input), std::move(pred));
+    }
+
     /** @brief Присваивает каждому элементу последовательности значение, полученное в результате
     вызова заданной функции без аргументов.
     @param seq последовательность
