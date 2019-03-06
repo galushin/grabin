@@ -35,6 +35,7 @@
 			<Add directory="../include" />
 		</Compiler>
 		<Unit filename="../include/grabin/algorithm.hpp" />
+		<Unit filename="../include/grabin/iterator.hpp" />
 		<Unit filename="../include/grabin/math.hpp" />
 		<Unit filename="../include/grabin/math/average_type.hpp" />
 		<Unit filename="../include/grabin/math/math_vector.hpp" />

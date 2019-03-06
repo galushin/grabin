@@ -15,46 +15,71 @@ Grabin -- это свободной программное обеспечени�
 обеспечение. Если это не так, см. https://www.gnu.org/licenses/.
 */
 
-#ifndef Z_GRABIN_NUMERIC_HPP_INCLUDED
-#define Z_GRABIN_NUMERIC_HPP_INCLUDED
+#ifndef Z_GRABIN_ITERATOR_HPP_INCLUDED
+#define Z_GRABIN_ITERATOR_HPP_INCLUDED
 
-/** @file grabin/numeric.hpp
- @brief Обобщённые численные операции
+/** @file grabin/iterator.hpp
+ @brief Функциональность, связанная с итераторами
 */
 
-#include <grabin/iterator.hpp>
-#include <numeric>
+#include <iterator>
 
 namespace grabin
 {
 inline namespace v1
 {
-    /** @brief Присваивает элементам последовательности последовательные значения, начиная с @c init
-    @param seq последовательность
-    @param init начальное значение
-    */
-    template <class ForwardSequence, class T>
-    void iota(ForwardSequence && seq, T init)
+    /// @cond false
+    namespace detail
     {
-        std::iota(grabin::begin(seq), grabin::end(seq), std::move(init));
-    }
+        template <class T>
+        struct static_empty_const
+        {
+            static constexpr T value{};
+        };
 
-    /** @brief Перемножает соответствующие элементы двух последовательностей, а результаты
-    последовательно прибавляет к @c init
-    @param in1, in2 входные последовательности
-    @param init исходное значение
-    @pre <tt>size(in1) >= size(in2)</tt>
-    */
-    template <class InputSequence1, class InputSequence2, class T>
-    T inner_product(InputSequence1 && in1, InputSequence2 && in2, T init)
+        template <class T>
+        constexpr T static_empty_const<T>::value;
+
+        using std::begin;
+        using std::end;
+
+        struct begin_fn
+        {
+            template <class Range>
+            auto operator()(Range && r) const
+            -> decltype(begin(std::forward<Range>(r)))
+            {
+                return begin(std::forward<Range>(r));
+            }
+        };
+
+        struct end_fn
+        {
+            template <class Range>
+            auto operator()(Range && r) const
+            -> decltype(end(std::forward<Range>(r)))
+            {
+                return end(std::forward<Range>(r));
+            }
+        };
+    }
+    // namespace detail
+    /// @endcond
+
+    namespace
     {
-        return std::inner_product(grabin::begin(in1), grabin::end(in1),
-                                  grabin::begin(in2), std::move(init));
+        /// @brief Функциональный объект для @c begin
+        constexpr auto const & begin
+            = detail::static_empty_const<detail::begin_fn>::value;
+
+        /// @brief Функциональный объект для @c end
+        constexpr auto const & end
+            = detail::static_empty_const<detail::end_fn>::value;
     }
 }
 // namespace v1
 }
 // namespace grabin
 
-
-#endif // Z_GRABIN_NUMERIC_HPP_INCLUDED
+#endif
+// Z_GRABIN_ITERATOR_HPP_INCLUDED
