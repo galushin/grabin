@@ -22,7 +22,8 @@ Grabin -- это свободной программное обеспечени�
  @brief Аналоги алгоритмов STL, определённые в терминах последовательностей и курсоров
 */
 
-#include <iterator>
+#include <grabin/iterator.hpp>
+
 #include <algorithm>
 
 namespace grabin
@@ -39,9 +40,8 @@ inline namespace v1
     template <class InputRange, class UnaryPredicate>
     bool all_of(InputRange && input, UnaryPredicate pred)
     {
-        using std::begin;
-        using std::end;
-        return std::all_of(begin(input), end(input), std::move(pred));
+        return std::all_of(grabin::begin(input), grabin::end(input),
+                           std::move(pred));
     }
 
     /** @brief Проверка, что некоторый элемент интервала удовлетворяют заданному
@@ -54,9 +54,8 @@ inline namespace v1
     template <class InputRange, class UnaryPredicate>
     bool any_of(InputRange && input, UnaryPredicate pred)
     {
-        using std::begin;
-        using std::end;
-        return std::any_of(begin(input), end(input), std::move(pred));
+        return std::any_of(grabin::begin(input), grabin::end(input),
+                           std::move(pred));
     }
 
     /** @brief Проверка, что ни один элемент интервала не удовлетворяют
@@ -69,9 +68,8 @@ inline namespace v1
     template <class InputRange, class UnaryPredicate>
     bool none_of(InputRange && input, UnaryPredicate pred)
     {
-        using std::begin;
-        using std::end;
-        return std::none_of(begin(input), end(input), std::move(pred));
+        return std::none_of(grabin::begin(input), grabin::end(input),
+                            std::move(pred));
     }
 
     /** @brief Подсчёт количества элементов, равных заданному значению
@@ -82,9 +80,7 @@ inline namespace v1
     template <class InputRange, class T>
     auto count(InputRange && input, T const & value)
     {
-        using std::begin;
-        using std::end;
-        return std::count(begin(input), end(input), value);
+        return std::count(grabin::begin(input), grabin::end(input), value);
     }
 
     /** @brief Подсчёт количества элементов, удовлетворяющих заданному предикату
@@ -96,9 +92,8 @@ inline namespace v1
     template <class InputRange, class UnaryPredicate>
     auto count_if(InputRange && input, UnaryPredicate pred)
     {
-        using std::begin;
-        using std::end;
-        return std::count_if(begin(input), end(input), std::move(pred));
+        return std::count_if(grabin::begin(input), grabin::end(input),
+                             std::move(pred));
     }
 
     /** @brief Присваивает каждому элементу последовательности значение, полученное в результате
@@ -109,9 +104,7 @@ inline namespace v1
     template <class ForwardSequence, class Generator>
     void generate(ForwardSequence && seq, Generator gen)
     {
-        using std::begin;
-        using std::end;
-        std::generate(begin(seq), end(seq), std::move(gen));
+        std::generate(grabin::begin(seq), grabin::end(seq), std::move(gen));
     }
 
     /** @brief Проверка равенства двух последовательностей
@@ -122,9 +115,8 @@ inline namespace v1
     template <class InputSequence1, class InputSequence2>
     bool equal(InputSequence1 const & in1, InputSequence2 const & in2)
     {
-        using std::begin;
-        using std::end;
-        return std::equal(begin(in1), end(in1), begin(in2), end(in2));
+        return std::equal(grabin::begin(in1), grabin::end(in1),
+                          grabin::begin(in2), grabin::end(in2));
     }
 }
 // namespace v1
