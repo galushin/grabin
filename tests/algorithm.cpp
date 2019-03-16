@@ -97,6 +97,31 @@ TEST_CASE("algorithm: count, front element")
     grabin_test::check(property);
 }
 
+TEST_CASE("fill")
+{
+    using Value = int;
+    auto property = [](std::forward_list<Value> const & xs_old, Value const & value)
+    {
+        auto const xs_std = [&]
+        {
+            auto xs = xs_old;
+            std::fill(xs.begin(), xs.end(), value);
+            return xs;
+        }();
+
+        auto const xs_grabin = [&]
+        {
+            auto xs = xs_old;
+            grabin::fill(xs, value);
+            return xs;
+        }();
+
+        CHECK(xs_grabin == xs_std);
+    };
+
+    grabin_test::check(property);
+}
+
 TEST_CASE("generate")
 {
     auto property = [](std::forward_list<int> const & xs_old)
@@ -132,6 +157,122 @@ TEST_CASE("equal")
         CAPTURE(xs, ys);
 
         CHECK(grabin::equal(xs, ys) == std::equal(xs.begin(), xs.end(), ys.begin(), ys.end()));
+    };
+
+    grabin_test::check(property);
+}
+
+TEST_CASE("is_permutation")
+{
+    auto property = [](std::forward_list<int> const & xs, std::list<int> const & ys)
+    {
+        CAPTURE(xs, ys);
+
+        REQUIRE(grabin::is_permutation(xs, ys) == std::is_permutation(xs.begin(), xs.end(), ys.begin(), ys.end()));
+        REQUIRE(grabin::is_permutation(ys, xs) == std::is_permutation(xs.begin(), xs.end(), ys.begin(), ys.end()));
+    };
+
+    grabin_test::check(property);
+}
+
+TEST_CASE("is_permutation: with next permutation")
+{
+    auto property = [](std::forward_list<int> const & xs)
+    {
+        std::list<int> ys(xs.begin(), xs.end());
+        std::next_permutation(ys.begin(), ys.end());
+
+        CAPTURE(xs, ys);
+
+        REQUIRE(grabin::is_permutation(xs, ys));
+        REQUIRE(grabin::is_permutation(ys, xs));
+    };
+
+    grabin_test::check(property);
+}
+
+TEST_CASE("is_permutation with predicate")
+{
+    auto property = [](std::forward_list<int> const & xs, std::list<int> const & ys)
+    {
+        CAPTURE(xs, ys);
+
+        auto const pred = std::greater<>{};
+
+        REQUIRE(grabin::is_permutation(xs, ys, pred)
+                == std::is_permutation(xs.begin(), xs.end(), ys.begin(), ys.end(), pred));
+    };
+
+    grabin_test::check(property);
+}
+
+TEST_CASE("next_permutation")
+{
+    auto property = [](std::list<int> const & xs_old)
+    {
+        auto xs_std = xs_old;
+        auto const r_std = std::next_permutation(xs_std.begin(), xs_std.end());
+
+        auto xs_grabin = xs_old;
+        auto const r_grabin = grabin::next_permutation(xs_grabin);
+
+        REQUIRE(xs_std == xs_grabin);
+        REQUIRE(r_std == r_grabin);
+    };
+
+    grabin_test::check(property);
+}
+
+TEST_CASE("next_permutation with predicate")
+{
+    auto property = [](std::list<int> const & xs_old)
+    {
+        auto const pred = std::greater<>{};
+
+        auto xs_std = xs_old;
+        auto const r_std = std::next_permutation(xs_std.begin(), xs_std.end(), pred);
+
+        auto xs_grabin = xs_old;
+        auto const r_grabin = grabin::next_permutation(xs_grabin, pred);
+
+        REQUIRE(xs_std == xs_grabin);
+        REQUIRE(r_std == r_grabin);
+    };
+
+    grabin_test::check(property);
+}
+
+TEST_CASE("prev_permutation")
+{
+    auto property = [](std::list<int> const & xs_old)
+    {
+        auto xs_std = xs_old;
+        auto const r_std = std::prev_permutation(xs_std.begin(), xs_std.end());
+
+        auto xs_grabin = xs_old;
+        auto const r_grabin = grabin::prev_permutation(xs_grabin);
+
+        REQUIRE(xs_std == xs_grabin);
+        REQUIRE(r_std == r_grabin);
+    };
+
+    grabin_test::check(property);
+}
+
+TEST_CASE("prev_permutation with predicate")
+{
+    auto property = [](std::list<int> const & xs_old)
+    {
+        auto const pred = std::greater<>{};
+
+        auto xs_std = xs_old;
+        auto const r_std = std::prev_permutation(xs_std.begin(), xs_std.end(), pred);
+
+        auto xs_grabin = xs_old;
+        auto const r_grabin = grabin::prev_permutation(xs_grabin, pred);
+
+        REQUIRE(xs_std == xs_grabin);
+        REQUIRE(r_std == r_grabin);
     };
 
     grabin_test::check(property);

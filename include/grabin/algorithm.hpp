@@ -96,6 +96,16 @@ inline namespace v1
                              std::move(pred));
     }
 
+    /** @brief Присваивает каждому элементу последовательности заданное значение.
+    @param seq последовательность
+    @param value значение
+    */
+    template <class ForwardSequence, class T>
+    void fill(ForwardSequence && seq, T const & value)
+    {
+        std::fill(grabin::begin(seq), grabin::end(seq), value);
+    }
+
     /** @brief Присваивает каждому элементу последовательности значение, полученное в результате
     вызова заданной функции без аргументов.
     @param seq последовательность
@@ -117,6 +127,52 @@ inline namespace v1
     {
         return std::equal(grabin::begin(in1), grabin::end(in1),
                           grabin::begin(in2), grabin::end(in2));
+    }
+
+    /** @brief Проверяет, что две последовательности являются перестановками друг друга
+    @param in1, in2 последовательности
+    @param bin_pred бинарный предикат, задающий отношение порядка
+    @return @b true, если @c in1 и @c in2 являются перестановками друг друга, иначе -- @b false
+    */
+    template <class ForwardSequence1, class ForwardSequence2, class BinaryPredicate = std::equal_to<>>
+    bool is_permutation(ForwardSequence1 const & in1, ForwardSequence2 const & in2,
+                        BinaryPredicate bin_pred = BinaryPredicate())
+    {
+        return std::is_permutation(grabin::begin(in1), grabin::end(in1),
+                                   grabin::begin(in2), grabin::end(in2),
+                                   std::move(bin_pred));
+    }
+
+    /** @brief Построение следующей перестановки последовательности
+    @param seq последовательность
+    @param bin_pred бинарный предикат, задающий отношение порядка
+    @return @b false, если @c seq упорядочена в обратном лексикографическом порядке относительно
+    бинарного предиката @c bin_pred, иначе --- @b false.
+    @post Преобразует @c seq в лексикографически следующую перестановку, если @c seq уже
+    упорядочена в обратном лексикографическом порядке относительно @c bin_pred, то упорядочивает её
+    в прямом порядке относительно @c bin_pred.
+    */
+    template <class BidirectionalSequence, class BinaryPredicate = std::less<>>
+    bool next_permutation(BidirectionalSequence && seq,
+                          BinaryPredicate bin_pred = BinaryPredicate())
+    {
+        return std::next_permutation(grabin::begin(seq), grabin::end(seq), std::move(bin_pred));
+    }
+
+    /** @brief Построение предыдущей перестановки последовательности
+    @param seq последовательность
+    @param bin_pred бинарный предикат, задающий отношение порядка
+    @return @b false, если @c seq упорядочена в лексикографическом порядке относительно бинарного
+    предиката @c bin_pred, иначе --- @b false.
+    @post Преобразует @c seq в лексикографически следующую перестановку, если @c seq уже
+    упорядочена в лексикографическом порядке относительно @c bin_pred, то упорядочивает её
+    в обратном лексикографическом порядке относительно @c bin_pred.
+    */
+    template <class BidirectionalSequence, class BinaryPredicate = std::less<>>
+    bool prev_permutation(BidirectionalSequence && seq,
+                          BinaryPredicate bin_pred = BinaryPredicate())
+    {
+        return std::prev_permutation(grabin::begin(seq), grabin::end(seq), std::move(bin_pred));
     }
 }
 // namespace v1
