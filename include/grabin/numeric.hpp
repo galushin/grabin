@@ -39,6 +39,19 @@ inline namespace v1
         std::iota(grabin::begin(seq), grabin::end(seq), std::move(init));
     }
 
+    /** @brief Вычисляет левую свёртку (left fold) последовательности элементов
+    @param in последовательность элементов
+    @param init_value начальное значение
+    @param op бинарная операция, если она не задана явно, то используется бинарный плюс
+    @return Левая свёртка элементов @c in, используя бинарную операцию @c op и начальное значение
+    @c init_value
+    */
+    template <class InputSequence, class T, class BinaryOperation = std::plus<>>
+    T accumulate(InputSequence && in, T const & init_value, BinaryOperation op = BinaryOperation())
+    {
+        return std::accumulate(grabin::begin(in), grabin::end(in), init_value, std::move(op));
+    }
+
     /** @brief Перемножает соответствующие элементы двух последовательностей, а результаты
     последовательно прибавляет к @c init
     @param in1, in2 входные последовательности
@@ -50,6 +63,23 @@ inline namespace v1
     {
         return std::inner_product(grabin::begin(in1), grabin::end(in1),
                                   grabin::begin(in2), std::move(init));
+    }
+
+    /** @brief Свёртка последовательности элементов
+    @param in последовательность элементов
+    @param init_value начальное значение, если оно не задано явно, то используется <tt>T{}</tt>,
+    где @c T -- тип элементов последовательности @c in
+    @param op бинарная операция, если она не задана явно, то используется бинарный плюс
+    @return Cвёртка элементов @c in, используя бинарную операцию @c op и начальное значение
+    @c init_value
+    */
+    template <class InputSequence,
+              class T = typename std::decay_t<InputSequence>::value_type,
+              class BinaryOperation = std::plus<>>
+    T reduce(InputSequence && in, T const & init_value = T{},
+             BinaryOperation op = BinaryOperation())
+    {
+        return grabin::accumulate(std::forward<InputSequence>(in), init_value, std::move(op));
     }
 }
 // namespace v1

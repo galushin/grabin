@@ -11,6 +11,9 @@ namespace grabin_test
     {
     public:
         // Типы
+        /// @brief Тип значения
+        using value_type = Value;
+
         /// @brief Тип итератора
         using iterator = std::istream_iterator<Value>;
 
