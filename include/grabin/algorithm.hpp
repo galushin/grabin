@@ -129,6 +129,76 @@ inline namespace v1
                           grabin::begin(in2), grabin::end(in2));
     }
 
+    /** @brief Проверяет, является ли @c seq максимальной бинарной кучей
+    @param seq последовательность
+    @param cmp функция сравнения. Если не задана явно, то используется оператор
+    "меньше"
+    @return @b true, если @c seq является максимальной бинарной кучей
+    относительно функции сравнения @c cmp
+    */
+    template <class RandomAccessSequence, class Compare = std::less<>>
+    bool is_heap(RandomAccessSequence && seq, Compare cmp = Compare())
+    {
+        return std::is_heap(grabin::begin(seq), grabin::end(seq), std::move(cmp));
+    }
+
+    /** @brief Превращает @c seq в максимальную бинарную кучу
+    @param seq последовательность
+    @param cmp функция сравнения. Если не задана явно, то используется оператор
+    "меньше"
+    @post @c seq после вызова является перестановкой @c seq до вызова
+    @post <tt>grabin::is_heap(seq, cmp)</tt>
+    */
+    template <class RandomAccessSequence, class Compare = std::less<>>
+    void make_heap(RandomAccessSequence && seq, Compare cmp = Compare())
+    {
+        return std::make_heap(grabin::begin(seq), grabin::end(seq), std::move(cmp));
+    }
+
+    /** @brief Вставка нового элемента в бинарную кучу
+    @param seq последовательность
+    @param cmp функция сравнения. Если не задана явно, то используется оператор
+    "меньше"
+    @pre Последовательность элементов кроме последнего является максимальной
+    бинарной кучей
+    @post @c seq после вызова является перестановкой @c seq до вызова
+    @post <tt>grabin::is_heap(seq, cmp)</tt>
+    */
+    template <class RandomAccessSequence, class Compare = std::less<>>
+    void push_heap(RandomAccessSequence && seq, Compare cmp = Compare())
+    {
+        return std::push_heap(grabin::begin(seq), grabin::end(seq), std::move(cmp));
+    }
+
+    /** @brief Удаление наибольшего элемента из максимальной бинарной кучи
+    @param seq последовательность
+    @param cmp функция сравнения. Если не задана явно, то используется оператор
+    "меньше"
+    @pre <tt>grabin::is_heap(seq, cmp)</tt>
+    @pre @c seq не должна быть пустой
+    @post Обменивает наибольший элемент кучи и её последний элемент,
+    последовательность элементов кроме последнего остаётся максимальной бинарной
+    кучей
+    */
+    template <class RandomAccessSequence, class Compare = std::less<>>
+    void pop_heap(RandomAccessSequence && seq, Compare cmp = Compare())
+    {
+        return std::pop_heap(grabin::begin(seq), grabin::end(seq), std::move(cmp));
+    }
+
+    /** @brief Сортировка максимальной бинарной кучи
+    @param seq последовательность
+    @param cmp функция сравнения. Если не задана явно, то используется оператор
+    "меньше"
+    @pre <tt>grabin::is_heap(seq, cmp)</tt>
+    @post <tt>grabin::is_sorted(seq, cmp)</tt>
+    */
+    template <class RandomAccessSequence, class Compare = std::less<>>
+    void sort_heap(RandomAccessSequence && seq, Compare cmp = Compare())
+    {
+        return std::sort_heap(grabin::begin(seq), grabin::end(seq), std::move(cmp));
+    }
+
     /** @brief Проверяет, что две последовательности являются перестановками друг друга
     @param in1, in2 последовательности
     @param bin_pred бинарный предикат, задающий отношение порядка

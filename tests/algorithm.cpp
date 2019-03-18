@@ -162,14 +162,245 @@ TEST_CASE("equal")
     grabin_test::check(property);
 }
 
+TEST_CASE("is_heap")
+{
+    auto property = [](std::vector<int> const & xs)
+    {
+        CAPTURE(xs);
+
+        REQUIRE(grabin::is_heap(xs) == std::is_heap(xs.begin(), xs.end()));
+    };
+
+    grabin_test::check(property);
+}
+
+TEST_CASE("is_heap : true")
+{
+    auto property = [](std::vector<int> const & xs_old)
+    {
+        auto xs = [&]
+        {
+            auto xs = xs_old;
+            std::make_heap(xs.begin(), xs.end());
+            return xs;
+        }();
+
+        CAPTURE(xs);
+
+        REQUIRE(grabin::is_heap(xs));
+    };
+
+    grabin_test::check(property);
+}
+
+TEST_CASE("is_heap with predicate")
+{
+    auto property = [](std::vector<int> const & xs)
+    {
+        CAPTURE(xs);
+
+        auto const pred = std::greater<>{};
+
+        REQUIRE(grabin::is_heap(xs, pred)
+                == std::is_heap(xs.begin(), xs.end(), pred));
+    };
+
+    grabin_test::check(property);
+}
+
+TEST_CASE("is_heap with predicate : true")
+{
+    auto property = [](std::vector<int> const & xs_old)
+    {
+        auto const pred = std::greater<>{};
+
+        auto xs = [&]
+        {
+            auto xs = xs_old;
+            std::make_heap(xs.begin(), xs.end(), pred);
+            return xs;
+        }();
+
+        CAPTURE(xs);
+
+        REQUIRE(grabin::is_heap(xs, pred));
+    };
+
+    grabin_test::check(property);
+}
+
+TEST_CASE("make_heap")
+{
+    auto property = [](std::vector<int> const & xs_old)
+    {
+        auto xs = xs_old;
+
+        CAPTURE(xs);
+
+        grabin::make_heap(xs);
+
+        REQUIRE(grabin::is_permutation(xs, xs_old));
+        REQUIRE(grabin::is_heap(xs));
+    };
+
+    grabin_test::check(property);
+}
+
+TEST_CASE("make_heap with predicate")
+{
+    auto property = [](std::vector<int> const & xs_old)
+    {
+        auto xs = xs_old;
+
+        CAPTURE(xs);
+
+        auto const pred = std::greater<>{};
+
+        grabin::make_heap(xs, pred);
+
+        REQUIRE(grabin::is_permutation(xs, xs_old));
+        REQUIRE(grabin::is_heap(xs, pred));
+    };
+
+    grabin_test::check(property);
+}
+
+TEST_CASE("push_heap")
+{
+    auto property = [](std::vector<int> xs, int const & value)
+    {
+        grabin::make_heap(xs);
+        xs.push_back(value);
+        CAPTURE(xs);
+
+        auto const xs_old = xs;
+
+        grabin::push_heap(xs);
+
+        REQUIRE(grabin::is_permutation(xs, xs_old));
+        REQUIRE(grabin::is_heap(xs));
+    };
+
+    grabin_test::check(property);
+}
+
+
+TEST_CASE("push_heap with predicate")
+{
+    auto property = [](std::vector<int> xs, int const & value)
+    {
+        auto const pred = std::greater<>{};
+
+        grabin::make_heap(xs, pred);
+        xs.push_back(value);
+        CAPTURE(xs);
+
+        auto const xs_old = xs;
+
+        grabin::push_heap(xs, pred);
+
+        REQUIRE(grabin::is_permutation(xs, xs_old));
+        REQUIRE(grabin::is_heap(xs, pred));
+    };
+
+    grabin_test::check(property);
+}
+
+TEST_CASE("pop_heap")
+{
+    auto property = [](std::vector<int> xs, int const & value)
+    {
+        xs.push_back(value);
+        grabin::make_heap(xs);
+        CAPTURE(xs);
+
+        auto const xs_old = xs;
+
+        grabin::pop_heap(xs);
+
+        REQUIRE(xs.back() == xs_old.front());
+
+        xs.pop_back();
+        REQUIRE(grabin::is_heap(xs));
+    };
+
+    grabin_test::check(property);
+}
+
+
+TEST_CASE("pop_heap with predicate")
+{
+    auto property = [](std::vector<int> xs, int const & value)
+    {
+        auto const pred = std::greater<>{};
+
+        xs.push_back(value);
+        grabin::make_heap(xs, pred);
+        CAPTURE(xs);
+
+        auto const xs_old = xs;
+
+        grabin::pop_heap(xs, pred);
+
+        REQUIRE(xs.back() == xs_old.front());
+
+        xs.pop_back();
+        REQUIRE(grabin::is_heap(xs, pred));
+    };
+
+    grabin_test::check(property);
+}
+
+TEST_CASE("sort_heap")
+{
+    auto property = [](std::vector<int> xs)
+    {
+        grabin::make_heap(xs);
+        CAPTURE(xs);
+
+        auto const xs_old = xs;
+
+        grabin::sort_heap(xs);
+
+        REQUIRE(grabin::is_permutation(xs, xs_old));
+        REQUIRE(std::is_sorted(xs.begin(), xs.end()));
+    };
+
+    grabin_test::check(property);
+}
+
+
+TEST_CASE("sort_heap with predicate")
+{
+    auto property = [](std::vector<int> xs)
+    {
+        auto const pred = std::greater<>{};
+
+        grabin::make_heap(xs, pred);
+        CAPTURE(xs);
+
+        auto const xs_old = xs;
+
+        grabin::sort_heap(xs, pred);
+
+        REQUIRE(grabin::is_permutation(xs, xs_old));
+        REQUIRE(std::is_sorted(xs.begin(), xs.end(), pred));
+    };
+
+    grabin_test::check(property);
+}
+
+
 TEST_CASE("is_permutation")
 {
     auto property = [](std::forward_list<int> const & xs, std::list<int> const & ys)
     {
         CAPTURE(xs, ys);
 
-        REQUIRE(grabin::is_permutation(xs, ys) == std::is_permutation(xs.begin(), xs.end(), ys.begin(), ys.end()));
-        REQUIRE(grabin::is_permutation(ys, xs) == std::is_permutation(xs.begin(), xs.end(), ys.begin(), ys.end()));
+        REQUIRE(grabin::is_permutation(xs, ys)
+                == std::is_permutation(xs.begin(), xs.end(), ys.begin(), ys.end()));
+        REQUIRE(grabin::is_permutation(ys, xs)
+                == std::is_permutation(xs.begin(), xs.end(), ys.begin(), ys.end()));
     };
 
     grabin_test::check(property);
