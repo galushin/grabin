@@ -6,7 +6,7 @@
 
 namespace grabin_test
 {
-    template <class Value>
+    template <class Value, class Tag = void>
     class istream_sequence
     {
     public:

@@ -119,14 +119,19 @@ inline namespace v1
 
     /** @brief Проверка равенства двух последовательностей
     @param in1, in2 входные последовательности
+    @param bin_pred бинарный предикат, определяющий равенство элементов. Если
+    он не задан явно, то используется оператор "равно"
     @return @b true, если последовательности содержать одинаковое количество элементов и их
-    соответствующие элементы равны
+    соответствующие элементы равны (в смысле придиката @c bin_pred)
     */
-    template <class InputSequence1, class InputSequence2>
-    bool equal(InputSequence1 const & in1, InputSequence2 const & in2)
+    template <class InputSequence1, class InputSequence2,
+              class BinaryPredicate = std::equal_to<>>
+    bool equal(InputSequence1 && in1, InputSequence2 && in2,
+               BinaryPredicate bin_pred = BinaryPredicate())
     {
         return std::equal(grabin::begin(in1), grabin::end(in1),
-                          grabin::begin(in2), grabin::end(in2));
+                          grabin::begin(in2), grabin::end(in2),
+                          std::move(bin_pred));
     }
 
     /** @brief Проверяет, является ли @c seq максимальной бинарной кучей
@@ -199,13 +204,58 @@ inline namespace v1
         return std::sort_heap(grabin::begin(seq), grabin::end(seq), std::move(cmp));
     }
 
+    /** @brief Обрезает значения, выходящие за заданные границы
+    @param x значение
+    @param low нижняя граница
+    @param high верхняя граница
+    @param cmp функция сравнения. Если не задана явно, то используется оператор
+    "меньше"
+    @pre <tt>!cmp(high, low)</tt>
+    @return Если <tt>cmp(x, low)</tt>, возвращает @c low, если
+    <tt>cmp(high, x)</tt>, возвращает @c high, в остальные случаях -- @c x
+    */
+    template <class T, class Compare = std::less<>>
+    T const & clamp(T const & x, T const & low, T const & high,
+                    Compare cmp = Compare())
+    {
+        if(cmp(x, low))
+        {
+            return low;
+        }
+        else if(cmp(high, x))
+        {
+            return high;
+        }
+        else
+        {
+            return x;
+        }
+    }
+
+    /** @brief Лексикографическое сравнение двух последователостей
+    @param in1, in2 сравниваемые последовательности
+    @param cmp функция сравнения. Если не задана явно, то используется оператор
+    "меньше"
+    @return @b true, если @c in1 лексикографически предшествует @c in2, иначе --
+    @b false.
+    */
+    template <class InputSequence1, class InputSequence2,
+              class Compare = std::less<>>
+    bool lexicographical_compare(InputSequence1 && in1, InputSequence2 && in2,
+                                 Compare cmp = Compare())
+    {
+        return std::lexicographical_compare(grabin::begin(in1), grabin::end(in1),
+                                            grabin::begin(in2), grabin::end(in2),
+                                            std::move(cmp));
+    }
+
     /** @brief Проверяет, что две последовательности являются перестановками друг друга
     @param in1, in2 последовательности
     @param bin_pred бинарный предикат, задающий отношение порядка
     @return @b true, если @c in1 и @c in2 являются перестановками друг друга, иначе -- @b false
     */
     template <class ForwardSequence1, class ForwardSequence2, class BinaryPredicate = std::equal_to<>>
-    bool is_permutation(ForwardSequence1 const & in1, ForwardSequence2 const & in2,
+    bool is_permutation(ForwardSequence1 && in1, ForwardSequence2 && in2,
                         BinaryPredicate bin_pred = BinaryPredicate())
     {
         return std::is_permutation(grabin::begin(in1), grabin::end(in1),
