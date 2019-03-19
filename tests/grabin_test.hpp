@@ -168,6 +168,19 @@ namespace grabin_test
      : ArbitraryReal<T>
     {};
 
+    template <class T1, class T2>
+    struct Arbitrary<std::pair<T1, T2>>
+    {
+        using value_type = std::pair<T1, T2>;
+
+        template <class Engine>
+        static value_type generate(Engine & rnd, generation_t generation)
+        {
+            return value_type(Arbitrary<T1>::generate(rnd, generation),
+                              Arbitrary<T2>::generate(rnd, generation));
+        }
+    };
+
     template <class... Types>
     struct Arbitrary<std::tuple<Types...>>
     {

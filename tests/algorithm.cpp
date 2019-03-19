@@ -162,6 +162,29 @@ TEST_CASE("equal")
     grabin_test::check(property);
 }
 
+TEST_CASE("equal with predicate")
+{
+    using Value = int;
+    auto property = [](std::vector<Value> const & xs_old,
+                       std::vector<Value> const & ys_old)
+    {
+        CAPTURE(xs_old, ys_old);
+
+        grabin_test::istream_sequence<Value, struct Tag1> xs(xs_old.begin(), xs_old.end());
+        grabin_test::istream_sequence<Value, struct Tag2> ys(ys_old.begin(), ys_old.end());
+
+        auto const pred
+            = [](Value const & x, Value const & y) { return x % 2 == y % 2; };
+
+        auto const r_grabin = grabin::equal(xs, ys, pred);
+        auto const r_std = std::equal(xs_old.begin(), xs_old.end(),
+                                      ys_old.begin(), ys_old.end(), pred);
+        CHECK(r_grabin == r_std);
+    };
+
+    grabin_test::check(property);
+}
+
 TEST_CASE("is_heap")
 {
     auto property = [](std::vector<int> const & xs)
@@ -390,6 +413,114 @@ TEST_CASE("sort_heap with predicate")
     grabin_test::check(property);
 }
 
+TEST_CASE("clamp")
+{
+    using Value = long;
+
+    auto property = [](Value const & x, Value const & y1, Value const & y2)
+    {
+        auto const bounds = std::minmax(y1, y2);
+
+        auto const x_clamped = grabin::clamp(x, bounds.first, bounds.second);
+
+        REQUIRE(bounds.first <= x_clamped);
+        REQUIRE(x_clamped <= bounds.second);
+
+        if(x < bounds.first)
+        {
+            REQUIRE(x_clamped == bounds.first);
+        }
+        else if(x >= bounds.second)
+        {
+            REQUIRE(x_clamped == bounds.second);
+        }
+        else
+        {
+            REQUIRE(x_clamped == x);
+        }
+    };
+
+    grabin_test::check(property);
+}
+
+TEST_CASE("clamp with predicate")
+{
+    using Value = std::pair<int, long>;
+
+    auto property = [](Value const & x, Value const & y1, Value const & y2)
+    {
+        auto const cmp = [](Value const & x, Value const & y)
+        {
+            return x.first < y.first;
+        };
+
+        auto const bounds = std::minmax(y1, y2);
+
+        auto const x_clamped = grabin::clamp(x, bounds.first, bounds.second, cmp);
+
+        REQUIRE(!cmp(x_clamped, bounds.first));
+        REQUIRE(!cmp(bounds.second, x_clamped));
+
+        if(cmp(x, bounds.first))
+        {
+            REQUIRE(x_clamped == bounds.first);
+        }
+        else if(cmp(bounds.second, x))
+        {
+            REQUIRE(x_clamped == bounds.second);
+        }
+        else
+        {
+            REQUIRE(x_clamped == x);
+        }
+    };
+
+    grabin_test::check(property);
+}
+
+TEST_CASE("lexicographical_compare")
+{
+    using Value = int;
+    auto property = [](std::vector<Value> const & xs_old,
+                       std::vector<Value> const & ys_old)
+    {
+        CAPTURE(xs_old, ys_old);
+
+        grabin_test::istream_sequence<Value, struct Tag1> xs(xs_old.begin(), xs_old.end());
+        grabin_test::istream_sequence<Value, struct Tag2> ys(ys_old.begin(), ys_old.end());
+
+        auto const r_grabin = grabin::lexicographical_compare(xs, ys);
+        auto const r_std
+            = std::lexicographical_compare(xs_old.begin(), xs_old.end(),
+                                           ys_old.begin(), ys_old.end());
+        CHECK(r_grabin == r_std);
+    };
+
+    grabin_test::check(property);
+}
+
+TEST_CASE("lexicographical_compare with predicate")
+{
+    using Value = int;
+    auto property = [](std::vector<Value> const & xs_old,
+                       std::vector<Value> const & ys_old)
+    {
+        CAPTURE(xs_old, ys_old);
+
+        grabin_test::istream_sequence<Value, struct Tag1> xs(xs_old.begin(), xs_old.end());
+        grabin_test::istream_sequence<Value, struct Tag2> ys(ys_old.begin(), ys_old.end());
+
+        auto const pred = std::greater<>{};
+
+        auto const r_grabin = grabin::lexicographical_compare(xs, ys, pred);
+        auto const r_std
+            = std::lexicographical_compare(xs_old.begin(), xs_old.end(),
+                                           ys_old.begin(), ys_old.end(), pred);
+        CHECK(r_grabin == r_std);
+    };
+
+    grabin_test::check(property);
+}
 
 TEST_CASE("is_permutation")
 {
