@@ -185,6 +185,267 @@ TEST_CASE("equal with predicate")
     grabin_test::check(property);
 }
 
+TEST_CASE("is_sorted")
+{
+    auto property = [](std::vector<int> const & xs)
+    {
+        CAPTURE(xs);
+
+        REQUIRE(grabin::is_sorted(xs) == std::is_sorted(xs.begin(), xs.end()));
+    };
+
+    grabin_test::check(property);
+}
+
+TEST_CASE("is_sorted : true")
+{
+    auto property = [](std::vector<int> const & xs_old)
+    {
+        auto xs = [&]
+        {
+            auto ys = xs_old;
+            std::sort(ys.begin(), ys.end());
+            return ys;
+        }();
+
+        CAPTURE(xs);
+
+        REQUIRE(grabin::is_sorted(xs));
+    };
+
+    grabin_test::check(property);
+}
+
+TEST_CASE("is_sorted with compare")
+{
+    auto property = [](std::vector<int> const & xs)
+    {
+        CAPTURE(xs);
+
+        auto const pred = std::greater<>{};
+
+        REQUIRE(grabin::is_sorted(xs, pred)
+                == std::is_sorted(xs.begin(), xs.end(), pred));
+    };
+
+    grabin_test::check(property);
+}
+
+TEST_CASE("is_sorted with compare : true")
+{
+    auto property = [](std::vector<int> const & xs_old)
+    {
+        auto const pred = std::greater<>{};
+
+        auto xs = [&]
+        {
+            auto ys = xs_old;
+            std::sort(ys.begin(), ys.end(), pred);
+            return ys;
+        }();
+
+        CAPTURE(xs);
+
+        REQUIRE(grabin::is_sorted(xs, pred));
+    };
+
+    grabin_test::check(property);
+}
+
+TEST_CASE("sort")
+{
+    auto property = [](std::vector<int> const & xs_old)
+    {
+        auto xs = xs_old;
+
+        CAPTURE(xs);
+
+        grabin::sort(xs);
+
+        REQUIRE(grabin::is_permutation(xs, xs_old));
+        REQUIRE(grabin::is_sorted(xs));
+    };
+
+    grabin_test::check(property);
+}
+
+TEST_CASE("sort with compare")
+{
+    auto property = [](std::vector<int> const & xs_old)
+    {
+        auto xs = xs_old;
+
+        CAPTURE(xs);
+
+        auto const pred = std::greater<>{};
+
+        grabin::sort(xs, pred);
+
+        REQUIRE(grabin::is_permutation(xs, xs_old));
+        REQUIRE(grabin::is_sorted(xs, pred));
+    };
+
+    grabin_test::check(property);
+}
+
+TEST_CASE("binary_search")
+{
+    using Value = int;
+
+    auto property = [](std::vector<Value> xs, Value const & value)
+    {
+        grabin::sort(xs);
+
+        CAPTURE(xs, value);
+
+        REQUIRE(grabin::binary_search(xs, value)
+                == std::binary_search(xs.begin(), xs.end(), value));
+    };
+
+    grabin_test::check(property);
+}
+
+TEST_CASE("binary_search with compare")
+{
+    using Value = int;
+
+    auto property = [](std::vector<Value> xs, Value const & value)
+    {
+        auto const cmp = std::greater<>{};
+
+        grabin::sort(xs, cmp);
+
+        CAPTURE(xs, value);
+
+        REQUIRE(grabin::binary_search(xs, value, cmp)
+                == std::binary_search(xs.begin(), xs.end(), value, cmp));
+    };
+
+    grabin_test::check(property);
+}
+
+TEST_CASE("includes")
+{
+    using Value = int;
+
+    auto property = [](std::vector<Value> xs_src, std::vector<Value> ys_src)
+    {
+        grabin::sort(xs_src);
+        grabin::sort(ys_src);
+
+        CAPTURE(xs_src, ys_src);
+
+        grabin_test::istream_sequence<Value, struct Tag1> xs(xs_src.begin(), xs_src.end());
+        grabin_test::istream_sequence<Value, struct Tag2> ys(ys_src.begin(), ys_src.end());
+
+        REQUIRE(grabin::includes(xs_src, xs_src));
+        REQUIRE(grabin::includes(ys_src, ys_src));
+        REQUIRE(grabin::includes(xs, ys)
+                == std::includes(xs_src.begin(), xs_src.end(), ys_src.begin(), ys_src.end()));
+        REQUIRE(grabin::includes(ys_src, xs_src)
+                == std::includes(ys_src.begin(), ys_src.end(), xs_src.begin(), xs_src.end()));
+    };
+
+    grabin_test::check(property);
+}
+
+TEST_CASE("includes wtih compare")
+{
+    using Value = int;
+
+    auto property = [](std::vector<Value> xs_src, std::vector<Value> ys_src)
+    {
+        auto cmp = std::greater<>{};
+
+        grabin::sort(xs_src, cmp);
+        grabin::sort(ys_src, cmp);
+
+        CAPTURE(xs_src, ys_src);
+
+        grabin_test::istream_sequence<Value, struct Tag1> xs(xs_src.begin(), xs_src.end());
+        grabin_test::istream_sequence<Value, struct Tag2> ys(ys_src.begin(), ys_src.end());
+
+        REQUIRE(grabin::includes(xs_src, xs_src, cmp));
+        REQUIRE(grabin::includes(ys_src, ys_src, cmp));
+        REQUIRE(grabin::includes(xs, ys, cmp)
+                == std::includes(xs_src.begin(), xs_src.end(), ys_src.begin(), ys_src.end(), cmp));
+        REQUIRE(grabin::includes(ys_src, xs_src, cmp)
+                == std::includes(ys_src.begin(), ys_src.end(), xs_src.begin(), xs_src.end(), cmp));
+    };
+
+    grabin_test::check(property);
+}
+
+TEST_CASE("stable_sort")
+{
+    using Value = int;
+
+    struct Wrapper
+    {
+        Wrapper(Value val)
+         : value(std::move(val))
+        {}
+
+        Value value;
+
+        bool operator==(Wrapper const & that) const
+        {
+            return this->value == that.value;
+        }
+
+        bool operator<(Wrapper const & that) const
+        {
+            return abs(this->value) < abs(that.value);
+        }
+    };
+
+    auto property = [](std::vector<Value> const & xs_src)
+    {
+        std::vector<Wrapper> xs_old;
+        for(auto const & x : xs_src)
+        {
+            xs_old.emplace_back(x);
+        }
+
+        auto xs_grabin = xs_old;
+        grabin::stable_sort(xs_grabin);
+
+        auto xs_std = xs_old;
+        std::stable_sort(xs_std.begin(), xs_std.end());
+
+        REQUIRE(grabin::is_permutation(xs_grabin, xs_old));
+        REQUIRE(grabin::is_sorted(xs_grabin));
+        REQUIRE(xs_std == xs_grabin);
+    };
+
+    grabin_test::check(property);
+}
+
+TEST_CASE("stable_sort with compare")
+{
+    using Value = int;
+    auto property = [](std::vector<Value> const & xs_old)
+    {
+        auto cmp = [](Value const & x, Value const & y)
+        {
+            using std::abs;
+            return abs(x) < abs(y);
+        };
+
+        auto xs_grabin = xs_old;
+        grabin::stable_sort(xs_grabin, cmp);
+
+        auto xs_std = xs_old;
+        std::stable_sort(xs_std.begin(), xs_std.end(), cmp);
+
+        REQUIRE(grabin::is_permutation(xs_grabin, xs_old));
+        REQUIRE(grabin::is_sorted(xs_grabin, cmp));
+        REQUIRE(xs_std == xs_grabin);
+    };
+
+    grabin_test::check(property);
+}
+
 TEST_CASE("is_heap")
 {
     auto property = [](std::vector<int> const & xs)
@@ -203,9 +464,9 @@ TEST_CASE("is_heap : true")
     {
         auto xs = [&]
         {
-            auto xs = xs_old;
-            std::make_heap(xs.begin(), xs.end());
-            return xs;
+            auto ys = xs_old;
+            std::make_heap(ys.begin(), ys.end());
+            return ys;
         }();
 
         CAPTURE(xs);
@@ -239,9 +500,9 @@ TEST_CASE("is_heap with predicate : true")
 
         auto xs = [&]
         {
-            auto xs = xs_old;
-            std::make_heap(xs.begin(), xs.end(), pred);
-            return xs;
+            auto ys = xs_old;
+            std::make_heap(ys.begin(), ys.end(), pred);
+            return ys;
         }();
 
         CAPTURE(xs);
@@ -447,31 +708,31 @@ TEST_CASE("clamp with predicate")
 {
     using Value = std::pair<int, long>;
 
-    auto property = [](Value const & x, Value const & y1, Value const & y2)
+    auto property = [](Value const & value, Value const & bound1, Value const & bound2)
     {
         auto const cmp = [](Value const & x, Value const & y)
         {
             return x.first < y.first;
         };
 
-        auto const bounds = std::minmax(y1, y2);
+        auto const bounds = std::minmax(bound1, bound2);
 
-        auto const x_clamped = grabin::clamp(x, bounds.first, bounds.second, cmp);
+        auto const value_clamped = grabin::clamp(value, bounds.first, bounds.second, cmp);
 
-        REQUIRE(!cmp(x_clamped, bounds.first));
-        REQUIRE(!cmp(bounds.second, x_clamped));
+        REQUIRE(!cmp(value_clamped, bounds.first));
+        REQUIRE(!cmp(bounds.second, value_clamped));
 
-        if(cmp(x, bounds.first))
+        if(cmp(value, bounds.first))
         {
-            REQUIRE(x_clamped == bounds.first);
+            REQUIRE(value_clamped == bounds.first);
         }
-        else if(cmp(bounds.second, x))
+        else if(cmp(bounds.second, value))
         {
-            REQUIRE(x_clamped == bounds.second);
+            REQUIRE(value_clamped == bounds.second);
         }
         else
         {
-            REQUIRE(x_clamped == x);
+            REQUIRE(value_clamped == value);
         }
     };
 

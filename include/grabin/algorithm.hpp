@@ -134,12 +134,80 @@ inline namespace v1
                           std::move(bin_pred));
     }
 
+    /** @brief Проверяет, является ли последовательность сортированной
+    @param seq последовательность
+    @param cmp функция сравнения. Если не задана явно, то используется оператор "меньше"
+    @return @b true, если @c seq отсортирована относительно функции сравнения @c cmp, иначе --
+    @b false
+    */
+    template <class RandomAccessSequence, class Compare = std::less<>>
+    bool is_sorted(RandomAccessSequence && seq, Compare cmp = Compare())
+    {
+        return std::is_sorted(grabin::begin(seq), grabin::end(seq), std::move(cmp));
+    }
+
+    /** @brief Сортировка последовательности с лог-линейным в худшем случае временем выполнения
+    @param seq последовательность
+    @param cmp функция сравнения. Если не задана явно, то используется оператор "меньше"
+    @post <tt>is_sorted(seq, cmp)</tt>
+    */
+    template <class RandomAccessSequence, class Compare = std::less<>>
+    void sort(RandomAccessSequence && seq, Compare cmp = Compare())
+    {
+        std::sort(grabin::begin(seq), grabin::end(seq), std::move(cmp));
+    }
+
+    /** @brief Устойчивая сортировка последовательности
+    @param seq последовательность
+    @param cmp функция сравнения. Если не задана явно, то используется оператор "меньше"
+    @post <tt>is_sorted(seq, cmp)</tt>
+    @post Относительный порядок эквивалентных элементов сохраняется
+
+    Сложность составляет <tt>N*log(N)*log(N)</tt>, где <tt>N = size(seq)</tt>. Если доступно
+    достаточно дополнительной памяти, то сложность составляет <tt>N*log(N)</tt>
+    */
+    template <class RandomAccessSequence, class Compare = std::less<>>
+    void stable_sort(RandomAccessSequence && seq, Compare cmp = Compare())
+    {
+        return std::stable_sort(grabin::begin(seq), grabin::end(seq), std::move(cmp));
+    }
+
+    /** @brief Проверяет, если ли элемент, эквивалентный @c value, в сортированной
+    последовательности @c seq за логарифмическое время
+    @param seq последовательность
+    @param value значение
+    @param cmp функция сравнения. Если не задана явно, то используется оператор "меньше"
+    @pre @c seq разделена элементом @c value относительно функции сравнения @c cmp
+    @return @b true, если @c seq содержит элемент, эквивалентный @c value, иначе -- @b false.
+    */
+    template <class RandomAccessSequence, class T, class Compare = std::less<>>
+    bool binary_search(RandomAccessSequence && seq, T const & value, Compare cmp = Compare())
+    {
+        return binary_search(grabin::begin(seq), grabin::end(seq), value, std::move(cmp));
+    }
+
+    /** @brief Проверка того, что одна сортированная последовательность включает другую как
+    подмножество
+    @param in1 первая последовательность
+    @param in2 вторая последовательность
+    @param cmp функция сравнения. Если не задана явно, то используется оператор "меньше"
+    @pre <tt>is_sorted(in1, cmp)</tt>
+    @pre <tt>is_sorted(in2, cmp)</tt>
+    @return @b true, если @c in2 является подмножеством @c in1, иначе -- @b false
+    */
+    template <class InputSequence1, class InputSequence2, class Compare = std::less<>>
+    bool includes(InputSequence1 && in1, InputSequence2 && in2, Compare cmp = Compare())
+    {
+        return std::includes(grabin::begin(in1), grabin::end(in1),
+                             grabin::begin(in2), grabin::end(in2), std::move(cmp));
+    }
+
     /** @brief Проверяет, является ли @c seq максимальной бинарной кучей
     @param seq последовательность
     @param cmp функция сравнения. Если не задана явно, то используется оператор
     "меньше"
-    @return @b true, если @c seq является максимальной бинарной кучей
-    относительно функции сравнения @c cmp
+    @return @b true, если @c seq является максимальной бинарной кучей относительно функции
+    сравнения @c cmp, иначе -- @b false
     */
     template <class RandomAccessSequence, class Compare = std::less<>>
     bool is_heap(RandomAccessSequence && seq, Compare cmp = Compare())
