@@ -134,6 +134,40 @@ inline namespace v1
                           std::move(bin_pred));
     }
 
+    /** @brief Обращение последовательности
+    @param seq последовательность
+    @post Изменяет порядок элементов @c seq на обратный
+    */
+    template <class BidirectionalSequence>
+    void reverse(BidirectionalSequence && seq)
+    {
+        std::reverse(grabin::begin(seq), grabin::end(seq));
+    }
+
+    /** @brief Случайное перемешивание последовательности
+    @param seq последовательность
+    @param gen генератор равномерно распределённых случайных бит
+    @post Выполняет случайную перестановку элементов последовательности @c seq
+    */
+    template <class RandomAccessSequence, class URBG>
+    void shuffle(RandomAccessSequence && seq, URBG && gen)
+    {
+        return std::shuffle(grabin::begin(seq), grabin::end(seq), std::forward<URBG>(gen));
+    }
+
+    /** @brief Проверяет, является ли последовательность разделённой относительно предиката, то есть
+    все элементы, удовлетворяющие предикату, предшествуют элементам, не удовлетворяющим предикату.
+    @param in последовательность элементов
+    @param pred предикат
+    @return @b true, если все элементы последовательности @c in, удовлетворяющие предикату @c pred,
+    предшествуют элементам, не удовлетворяющим этому предикату.
+    */
+    template <class InputSequence, class UnaryPredicate>
+    bool is_partitioned(InputSequence && in, UnaryPredicate pred)
+    {
+        return std::is_partitioned(grabin::begin(in), grabin::end(in), pred);
+    }
+
     /** @brief Проверяет, является ли последовательность сортированной
     @param seq последовательность
     @param cmp функция сравнения. Если не задана явно, то используется оператор "меньше"
