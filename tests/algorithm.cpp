@@ -185,6 +185,79 @@ TEST_CASE("equal with predicate")
     grabin_test::check(property);
 }
 
+TEST_CASE("reverse")
+{
+    auto property = [](std::list<int> const & src)
+    {
+        auto xs_std = src;
+        std::reverse(xs_std.begin(), xs_std.end());
+
+        auto xs_grabin = src;
+        grabin::reverse(xs_grabin);
+
+        REQUIRE(xs_std == xs_grabin);
+
+        grabin::reverse(xs_grabin);
+
+        REQUIRE(xs_grabin == src);
+    };
+
+    grabin_test::check(property);
+}
+
+TEST_CASE("shuffle")
+{
+    auto property = [](std::vector<int> const & xs_old, long seed)
+    {
+        auto xs = xs_old;
+
+        std::minstd_rand rnd(seed);
+
+        grabin::shuffle(xs, rnd);
+
+        REQUIRE(grabin::is_permutation(xs, xs_old));
+    };
+
+    grabin_test::check(property);
+}
+
+TEST_CASE("is_partitioned")
+{
+    auto property = [](std::vector<int> const & src)
+    {
+        auto pred = [](int const & x) { return x % 2 == 0; };
+
+        grabin_test::istream_sequence<int> xs(src.begin(), src.end());
+        CAPTURE(xs);
+
+        REQUIRE(grabin::is_partitioned(xs, pred)
+                == std::is_partitioned(src.begin(), src.end(), pred));
+    };
+
+    grabin_test::check(property);
+}
+
+TEST_CASE("is_partitioned : true")
+{
+    auto property = [](std::vector<int> const & src)
+    {
+        auto pred = [](int const & x) { return x % 2 == 0; };
+
+        auto const xs = [&]
+        {
+            auto ys = src;
+            std::partition(ys.begin(), ys.end(), pred);
+            return ys;
+        }();
+
+        CAPTURE(xs);
+
+        REQUIRE(grabin::is_partitioned(xs, pred));
+    };
+
+    grabin_test::check(property);
+}
+
 TEST_CASE("is_sorted")
 {
     auto property = [](std::vector<int> const & xs)
