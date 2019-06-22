@@ -27,6 +27,8 @@ Grabin -- это свободной программное обеспечени�
 
 #include <cassert>
 #include <exception>
+#include <type_traits>
+#include <utility>
 
 namespace grabin
 {
