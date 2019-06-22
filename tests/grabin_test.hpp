@@ -205,6 +205,11 @@ namespace grabin_test
         }
     };
 
+    template <class C, class Tr>
+    struct Arbitrary<std::basic_string<C, Tr>>
+     : ArbitraryContainer<std::basic_string<C, Tr>>
+    {};
+
     template <class T, class A>
     struct Arbitrary<std::vector<T, A>>
      : ArbitraryContainer<std::vector<T, A>>

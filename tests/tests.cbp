@@ -35,6 +35,7 @@
 			<Add directory="../include" />
 		</Compiler>
 		<Unit filename="../include/grabin/algorithm.hpp" />
+		<Unit filename="../include/grabin/detail/config.hpp" />
 		<Unit filename="../include/grabin/iterator.hpp" />
 		<Unit filename="../include/grabin/math.hpp" />
 		<Unit filename="../include/grabin/math/average_type.hpp" />
@@ -43,11 +44,13 @@
 		<Unit filename="../include/grabin/numeric.hpp" />
 		<Unit filename="../include/grabin/numeric/linear_algebra.hpp" />
 		<Unit filename="../include/grabin/operators.hpp" />
+		<Unit filename="../include/grabin/optional/optional.hpp" />
 		<Unit filename="../include/grabin/statistics/linear_regression.hpp" />
 		<Unit filename="../include/grabin/statistics/mean.hpp" />
 		<Unit filename="../include/grabin/statistics/variance.hpp" />
 		<Unit filename="../include/grabin/stochastic/all.hpp" />
 		<Unit filename="../include/grabin/utility/as_const.hpp" />
+		<Unit filename="../include/grabin/utility/in_place.hpp" />
 		<Unit filename="../include/grabin/utility/rel_ops.hpp" />
 		<Unit filename="../include/grabin/utility/use_default.hpp" />
 		<Unit filename="../include/grabin/view/indices.hpp" />
@@ -61,6 +64,7 @@
 		<Unit filename="math/matrix.cpp" />
 		<Unit filename="numeric.cpp" />
 		<Unit filename="numeric/linear_algebra.cpp" />
+		<Unit filename="optional.cpp" />
 		<Unit filename="statistics/linear_regression.cpp" />
 		<Unit filename="statistics/mean.cpp" />
 		<Unit filename="statistics/variance.cpp" />

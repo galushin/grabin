@@ -32,9 +32,9 @@ OBJDIR_RELEASE = ./obj/Release
 DEP_RELEASE = 
 OUT_RELEASE = ./bin/Release/tests
 
-OBJ_DEBUG = $(OBJDIR_DEBUG)/algorithm.o $(OBJDIR_DEBUG)/grabin_test.o $(OBJDIR_DEBUG)/istream_sequence.o $(OBJDIR_DEBUG)/main.o $(OBJDIR_DEBUG)/math/math_vector.o $(OBJDIR_DEBUG)/math/matrix.o $(OBJDIR_DEBUG)/numeric.o $(OBJDIR_DEBUG)/numeric/linear_algebra.o $(OBJDIR_DEBUG)/statistics/linear_regression.o $(OBJDIR_DEBUG)/statistics/mean.o $(OBJDIR_DEBUG)/statistics/variance.o $(OBJDIR_DEBUG)/utility/as_const.o $(OBJDIR_DEBUG)/view/indices.o
+OBJ_DEBUG = $(OBJDIR_DEBUG)/algorithm.o $(OBJDIR_DEBUG)/grabin_test.o $(OBJDIR_DEBUG)/istream_sequence.o $(OBJDIR_DEBUG)/main.o $(OBJDIR_DEBUG)/math/math_vector.o $(OBJDIR_DEBUG)/math/matrix.o $(OBJDIR_DEBUG)/numeric.o $(OBJDIR_DEBUG)/numeric/linear_algebra.o $(OBJDIR_DEBUG)/optional.o $(OBJDIR_DEBUG)/statistics/linear_regression.o $(OBJDIR_DEBUG)/statistics/mean.o $(OBJDIR_DEBUG)/statistics/variance.o $(OBJDIR_DEBUG)/utility/as_const.o $(OBJDIR_DEBUG)/view/indices.o
 
-OBJ_RELEASE = $(OBJDIR_RELEASE)/algorithm.o $(OBJDIR_RELEASE)/grabin_test.o $(OBJDIR_RELEASE)/istream_sequence.o $(OBJDIR_RELEASE)/main.o $(OBJDIR_RELEASE)/math/math_vector.o $(OBJDIR_RELEASE)/math/matrix.o $(OBJDIR_RELEASE)/numeric.o $(OBJDIR_RELEASE)/numeric/linear_algebra.o $(OBJDIR_RELEASE)/statistics/linear_regression.o $(OBJDIR_RELEASE)/statistics/mean.o $(OBJDIR_RELEASE)/statistics/variance.o $(OBJDIR_RELEASE)/utility/as_const.o $(OBJDIR_RELEASE)/view/indices.o
+OBJ_RELEASE = $(OBJDIR_RELEASE)/algorithm.o $(OBJDIR_RELEASE)/grabin_test.o $(OBJDIR_RELEASE)/istream_sequence.o $(OBJDIR_RELEASE)/main.o $(OBJDIR_RELEASE)/math/math_vector.o $(OBJDIR_RELEASE)/math/matrix.o $(OBJDIR_RELEASE)/numeric.o $(OBJDIR_RELEASE)/numeric/linear_algebra.o $(OBJDIR_RELEASE)/optional.o $(OBJDIR_RELEASE)/statistics/linear_regression.o $(OBJDIR_RELEASE)/statistics/mean.o $(OBJDIR_RELEASE)/statistics/variance.o $(OBJDIR_RELEASE)/utility/as_const.o $(OBJDIR_RELEASE)/view/indices.o
 
 all: debug release
 
@@ -79,6 +79,9 @@ $(OBJDIR_DEBUG)/numeric.o: numeric.cpp
 
 $(OBJDIR_DEBUG)/numeric/linear_algebra.o: numeric/linear_algebra.cpp
 	$(CXX) $(CFLAGS_DEBUG) $(INC_DEBUG) -c numeric/linear_algebra.cpp -o $(OBJDIR_DEBUG)/numeric/linear_algebra.o
+
+$(OBJDIR_DEBUG)/optional.o: optional.cpp
+	$(CXX) $(CFLAGS_DEBUG) $(INC_DEBUG) -c optional.cpp -o $(OBJDIR_DEBUG)/optional.o
 
 $(OBJDIR_DEBUG)/statistics/linear_regression.o: statistics/linear_regression.cpp
 	$(CXX) $(CFLAGS_DEBUG) $(INC_DEBUG) -c statistics/linear_regression.cpp -o $(OBJDIR_DEBUG)/statistics/linear_regression.o
@@ -144,6 +147,9 @@ $(OBJDIR_RELEASE)/numeric.o: numeric.cpp
 
 $(OBJDIR_RELEASE)/numeric/linear_algebra.o: numeric/linear_algebra.cpp
 	$(CXX) $(CFLAGS_RELEASE) $(INC_RELEASE) -c numeric/linear_algebra.cpp -o $(OBJDIR_RELEASE)/numeric/linear_algebra.o
+
+$(OBJDIR_RELEASE)/optional.o: optional.cpp
+	$(CXX) $(CFLAGS_RELEASE) $(INC_RELEASE) -c optional.cpp -o $(OBJDIR_RELEASE)/optional.o
 
 $(OBJDIR_RELEASE)/statistics/linear_regression.o: statistics/linear_regression.cpp
 	$(CXX) $(CFLAGS_RELEASE) $(INC_RELEASE) -c statistics/linear_regression.cpp -o $(OBJDIR_RELEASE)/statistics/linear_regression.o
