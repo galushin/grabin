@@ -186,6 +186,7 @@ inline namespace v1
 
     /** @brief Необязательный объект
     @tparam T Тип объекта, который может содержаться в <tt>optional<T></tt>
+    @todo get_pointer и выразить через него те функции, где это будет более элегантно
     @todo Проверить спецификации constexpr
     @todo стратегия проверок
     @todo монадический интерфейс
@@ -243,6 +244,17 @@ inline namespace v1
         ~optional() = default;
 
         // @todo Реализовать Присваивание
+
+        /** @brief Если <tt>*this</tt> не содержит значения, то ничего не делает, иначе уничтожает
+        хранимое значение
+        @post <tt>this->has_value() == false</tt>
+        @return <tt>*this</tt>
+        */
+        optional & operator=(nullopt_t ) noexcept
+        {
+            this->reset();
+            return *this;
+        }
 
         optional & operator=(optional const & x) = delete;
         optional & operator=(optional && x) = delete;
@@ -357,6 +369,66 @@ inline namespace v1
         detail::optional_storage<T> storage_;
     };
 
+
+    // Сравнение с nullopt
+    //@{
+    /** @brief Проверка на равенство с @c nullopt_t
+    @param obj объект, сравниваемый с nullopt
+    @return <tt>!obj->has_value()</tt>
+    */
+    template <class T>
+    bool operator==(optional<T> const & obj, nullopt_t) noexcept
+    {
+        return !obj.has_value();
+    }
+
+    template <class T>
+    bool operator==(nullopt_t, optional<T> const & obj) noexcept
+    {
+        return !obj.has_value();
+    }
+    //@}
+
+    //@{
+    /** @brief Проверка на несовпадение с @c nullopt_t
+    @param obj объект, сравниваемый с nullopt
+    @return <tt>obj->has_value()</tt>
+    @todo Автоматическое определение
+    */
+    template <class T>
+    bool operator!=(optional<T> const & obj, nullopt_t) noexcept
+    {
+        return obj.has_value();
+    }
+
+    template <class T>
+    bool operator!=(nullopt_t, optional<T> const & obj) noexcept
+    {
+        return obj.has_value();
+    }
+    //@}
+
+    // Сравнение с объектом
+    /** @brief Сравнение @c optional и значения
+    @param lhs объект с необязательным значением
+    @param rhs значение
+    @return Эквивалентно <tt>lhs.has_value() ? lhs.value() == rhs : false</tt>
+    */
+    template <class T, class U>
+    bool operator==(optional<T> const & lhs, U const & rhs)
+    {
+        return lhs.has_value() ? lhs.value() == rhs : false;
+    }
+
+    /** @brief Сравнение @c optional и значения
+    @param lhs значение
+    @param rhs объект с необязательным значением
+    @return Эквивалентно <tt>rhs.has_value() ? lhs == rhs.value() : false</tt>
+    */
+    template <class T, class U>
+    bool operator==(T const & lhs, optional<U> const & rhs);
+
+    // Операторы сравнения
     /** @brief Оператор "равно"
     @param lhs, rhs аргументы
     @return Если <tt>lhs.has_value() != rhs.has_value()</tt>, возвращает @b false, в противном
@@ -366,22 +438,20 @@ inline namespace v1
     template <class T, class U>
     bool operator==(optional<T> const & lhs, optional<U> const & rhs)
     {
-        if(lhs.has_value() != rhs.has_value())
+        if(rhs.has_value())
         {
-            return false;
+            return lhs == rhs.value();
         }
-
-        if(lhs.has_value() == false)
+        else
         {
-            return true;
+            return lhs == nullopt;
         }
-
-        return lhs.value() == rhs.value();
     }
 
     /** @brief Оператор "не равно"
     @param lhs, rhs аргументы
     @return <tt>!(lhs == rhs)</tt>
+    @todo Автоматическое определение
     */
     template <class T, class U>
     bool operator!=(optional<T> const & lhs, optional<U> const & rhs)

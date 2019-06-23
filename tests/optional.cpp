@@ -279,7 +279,6 @@ static_assert(std::is_copy_constructible<grabin::optional<int>>::value, "");
 static_assert(std::is_copy_constructible<grabin::optional<std::string>>::value, "");
 static_assert(!std::is_copy_constructible<grabin::optional<std::unique_ptr<int>>>::value, "");
 
-// @todo Гетерогенная проверка на равенство
 namespace
 {
     template <class T, class Tag>
@@ -332,8 +331,72 @@ TEST_CASE("optional : equality")
         CHECK(!(no_value_2 == with_value_2));
         CHECK(no_value_1 != with_value_2);
 
+        CHECK(!(with_value_1 == no_value_1));
+        CHECK(!(with_value_1 == no_value_2));
+        CHECK(no_value_1 != with_value_1);
+
+        CHECK(!(no_value_1 == with_value_2));
+        CHECK(!(no_value_2 == with_value_2));
+        CHECK(no_value_1 != with_value_2);
+
         CHECK((with_value_1 == with_value_2) == (value_1 == value_2));
         CHECK((with_value_1 != with_value_2) == (value_1 != value_2));
+    };
+
+    grabin_test::check(property);
+}
+
+TEST_CASE("optional : assign nullopt")
+{
+    using Value = std::string;
+
+    grabin::optional<Value> obj_0;
+    obj_0 = grabin::nullopt;
+    CHECK(!obj_0.has_value());
+
+    static_assert(noexcept(obj_0 = grabin::nullopt), "Must be noexcept");
+
+    auto property = [](Value const & value)
+    {
+        grabin::optional<Value> obj(grabin::in_place, value);
+
+        CHECK(obj.has_value());
+
+        obj = grabin::nullopt;
+
+        CHECK(!obj.has_value());
+    };
+
+    grabin_test::check(property);
+}
+
+TEST_CASE("optional : equal to nullopt")
+{
+    using Value = std::string;
+
+    grabin::optional<Value> const obj_0;
+
+    CHECK(obj_0 == grabin::nullopt);
+    CHECK(!(obj_0 != grabin::nullopt));
+
+    CHECK(grabin::nullopt == obj_0);
+    CHECK(!(grabin::nullopt != obj_0));
+
+    static_assert(noexcept(obj_0 == grabin::nullopt), "Must be noexcept!");
+    static_assert(noexcept(grabin::nullopt == obj_0), "Must be noexcept!");
+    static_assert(noexcept(obj_0 != grabin::nullopt), "Must be noexcept!");
+    static_assert(noexcept(grabin::nullopt != obj_0), "Must be noexcept!");
+
+    auto property = [](Value const & value)
+    {
+        grabin::optional<Value> const obj(grabin::in_place, value);
+
+        CHECK(obj.has_value());
+        CHECK(obj != grabin::nullopt);
+        CHECK(!(obj == grabin::nullopt));
+
+        CHECK(grabin::nullopt != obj);
+        CHECK(!(grabin::nullopt == obj));
     };
 
     grabin_test::check(property);
