@@ -85,6 +85,101 @@ inline namespace v1
     {
         struct optional_dummy_type
         {};
+
+        template <class T>
+        class optional_storage
+        {
+        public:
+            // Конструкторы
+            optional_storage() noexcept
+             : has_value_(false)
+            {}
+
+            optional_storage(optional_storage const & x)
+             : optional_storage()
+            {
+                if(x.has_value())
+                {
+                    this->emplace(*x);
+                }
+            }
+
+            optional_storage(optional_storage &&);
+
+            // Деструктор
+            ~optional_storage()
+            {
+                // @todo Если деструктор тривиальный, то ничего не делать
+                this->reset();
+            }
+
+            // Присваивание
+            optional_storage & operator=(optional_storage const &);
+            optional_storage & operator=(optional_storage &&);
+
+            template <class... Args>
+            T & emplace(Args && ... args)
+            {
+                this->reset();
+
+                new(std::addressof(this->value_))T(std::forward<Args>(args)...);
+                this->has_value_ = true;
+
+                return *(*this);
+            }
+
+            // Немодифицирующие операции
+            bool has_value() const noexcept
+            {
+                return this->has_value_;
+            }
+
+            T const & operator*() const &
+            {
+                assert(this->has_value());
+                return this->value_;
+            }
+
+            T & operator*() &
+            {
+                assert(this->has_value());
+                return this->value_;
+            }
+
+            // Модифицирующие операции
+            void reset() noexcept
+            {
+                // @todo Не вызывать деструктор, если он тривиальный
+                if(this->has_value_)
+                {
+                    this->value_.T::~T();
+                    this->has_value_ = false;
+                }
+            }
+
+        private:
+            bool has_value_ = false;
+
+            union
+            {
+                nullopt_t::tag dummy_;
+                std::remove_const_t<T> value_;
+            };
+        };
+
+        template <bool>
+        struct delete_copy_ctor
+        {
+            delete_copy_ctor() = default;
+            delete_copy_ctor(delete_copy_ctor const & ) = default;
+        };
+
+        template <>
+        struct delete_copy_ctor<true>
+        {
+            delete_copy_ctor() = default;
+            delete_copy_ctor(delete_copy_ctor const & ) = delete;
+        };
     }
     // namespace detail
     /// @endcond
@@ -99,6 +194,7 @@ inline namespace v1
     */
     template <class T>
     class optional
+     : private detail::delete_copy_ctor<!std::is_copy_constructible<T>::value>
     {
     public:
         // Типы
@@ -110,16 +206,24 @@ inline namespace v1
         @post <tt>this->has_value() == false</tt>
         */
         //@{
-        optional() noexcept
-         : has_value_(false)
-        {}
+        optional() noexcept = default;
 
         optional(nullopt_t) noexcept
          : optional()
         {}
         //@}
 
-        // @todo Конструктор копий и перемещения
+        /** @brief Конструктор копий
+        @param x копируемый объект
+        Если @c x содержит значение, то инициализирует значение <tt>*this</tt> копией этого
+        значения.
+        @post <tt>this->has_value() == x.has_value()</tt>
+        @throw Любые исключения, порождаемые конструктором копий типа @c T
+        @todo Этот конструктор должен быть =delete, если !std::is_copy_constructible<T>::value - покрыть тестом
+        */
+        optional(optional const & x) = default;
+
+        optional(optional && x) = delete;
 
         /** @brief Инициализирует хранимое значение как объект типа @c T аргументами
         <tt>std::forward<Args>(args)...</tt>
@@ -136,12 +240,12 @@ inline namespace v1
         // @todo Реализовать все конструкторы
 
         /// @brief Деструктор
-        ~optional()
-        {
-            this->reset();
-        }
+        ~optional() = default;
 
         // @todo Реализовать Присваивание
+
+        optional & operator=(optional const & x) = delete;
+        optional & operator=(optional && x) = delete;
 
         /** @brief Уничтожает текущее значение (если оно имеется), а затем создаёт новое значение
         с помощью вызова конструктора <tt>T(std::forward<Args>(args)...)</tt>.
@@ -160,12 +264,7 @@ inline namespace v1
         {
             static_assert(std::is_constructible<T, Args...>::value, "");
 
-            this->reset();
-
-            new(std::addressof(this->value_))T(std::forward<Args>(args)...);
-            this->has_value_ = true;
-
-            return *(*this);
+            return this->storage_.emplace(std::forward<Args>(args)...);
         }
 
         // @todo Реализовать Обмен
@@ -177,7 +276,7 @@ inline namespace v1
         */
         bool has_value() const noexcept
         {
-            return this->has_value_;
+            return this->storage_.has_value();
         }
 
         explicit operator bool() const noexcept
@@ -199,7 +298,7 @@ inline namespace v1
             // @todo Проверка через стратегию
             assert(this->has_value());
 
-            return this->value_;
+            return *(this->storage_);
         }
 
         T & operator*() &
@@ -207,7 +306,7 @@ inline namespace v1
             // @todo Проверка через стратегию
             assert(this->has_value());
 
-            return this->value_;
+            return *(this->storage_);
         }
         //@}
 
@@ -251,23 +350,44 @@ inline namespace v1
         */
         void reset() noexcept
         {
-            // @todo Не вызывать деструктор, если он тривиальный
-            if(this->has_value_)
-            {
-                this->value_.T::~T();
-                this->has_value_ = false;
-            }
+            this->storage_.reset();
         }
 
     private:
-        bool has_value_ = false;
-
-        union
-        {
-            nullopt_t::tag dummy_;
-            std::remove_const_t<T> value_;
-        };
+        detail::optional_storage<T> storage_;
     };
+
+    /** @brief Оператор "равно"
+    @param lhs, rhs аргументы
+    @return Если <tt>lhs.has_value() != rhs.has_value()</tt>, возвращает @b false, в противном
+    случае, если <tt>bool(lhs) == false</tt>, возвращает @b true,
+    иначе --- <tt>lhs.value() == rhs.value()</tt>
+    */
+    template <class T, class U>
+    bool operator==(optional<T> const & lhs, optional<U> const & rhs)
+    {
+        if(lhs.has_value() != rhs.has_value())
+        {
+            return false;
+        }
+
+        if(lhs.has_value() == false)
+        {
+            return true;
+        }
+
+        return lhs.value() == rhs.value();
+    }
+
+    /** @brief Оператор "не равно"
+    @param lhs, rhs аргументы
+    @return <tt>!(lhs == rhs)</tt>
+    */
+    template <class T, class U>
+    bool operator!=(optional<T> const & lhs, optional<U> const & rhs)
+    {
+        return !(lhs == rhs);
+    }
 
     // @todo Реализовать прочую функциональность
 }

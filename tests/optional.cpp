@@ -248,3 +248,93 @@ TEST_CASE("optional : value non-const")
 
     grabin_test::check(property);
 }
+
+TEST_CASE("optional : copy_ctor without value")
+{
+    using Value = std::string;
+    grabin::optional<Value> const obj{};
+    auto const obj_copy(obj);
+
+    CHECK(obj_copy.has_value() == false);
+}
+
+TEST_CASE("optional : copy_ctor with valued")
+{
+    using Value = std::string;
+
+    auto property = [](Value const & value)
+    {
+        grabin::optional<Value> const obj(grabin::in_place, value);
+
+        auto const obj_copy(obj);
+
+        CHECK(obj_copy.has_value());
+        CHECK(obj_copy.value() == value);
+    };
+
+    grabin_test::check(property);
+}
+
+static_assert(std::is_copy_constructible<grabin::optional<int>>::value, "");
+static_assert(std::is_copy_constructible<grabin::optional<std::string>>::value, "");
+static_assert(!std::is_copy_constructible<grabin::optional<std::unique_ptr<int>>>::value, "");
+
+// @todo Гетерогенная проверка на равенство
+namespace
+{
+    template <class T, class Tag>
+    struct wrapper
+    {
+    public:
+        explicit wrapper(T init_value)
+         : value(std::move(init_value))
+        {}
+
+        T value;
+    };
+
+    template <class T, class TagT, class U, class TagU>
+    bool operator==(wrapper<T, TagT> const & x, wrapper<U, TagU> const & y)
+    {
+        return x.value == y.value;
+    }
+}
+
+TEST_CASE("optional : equality")
+{
+    using Value = std::string;
+    using Optional1 = grabin::optional<wrapper<Value, std::true_type>>;
+    using Optional2 = grabin::optional<wrapper<Value, std::false_type>>;
+
+    auto property = [](Value const & value_1, Value const & value_2)
+    {
+        Optional1 const no_value_1{};
+        Optional2 const no_value_2{};
+        Optional1 const with_value_1(grabin::in_place, value_1);
+        Optional2 const with_value_2(grabin::in_place, value_2);
+
+        CHECK(no_value_1 == no_value_1);
+        CHECK(no_value_1 == no_value_2);
+        CHECK(!(no_value_1 != no_value_1));
+        CHECK(!(no_value_1 != no_value_2));
+
+        CHECK(with_value_1 == with_value_1);
+        CHECK(!(with_value_1 != with_value_1));
+
+        CHECK(with_value_2 == with_value_2);
+        CHECK(!(with_value_2 != with_value_2));
+
+        CHECK(!(no_value_1 == with_value_1));
+        CHECK(!(no_value_2 == with_value_1));
+        CHECK(no_value_1 != with_value_1);
+
+        CHECK(!(no_value_1 == with_value_2));
+        CHECK(!(no_value_2 == with_value_2));
+        CHECK(no_value_1 != with_value_2);
+
+        CHECK((with_value_1 == with_value_2) == (value_1 == value_2));
+        CHECK((with_value_1 != with_value_2) == (value_1 != value_2));
+    };
+
+    grabin_test::check(property);
+}
