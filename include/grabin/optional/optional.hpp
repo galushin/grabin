@@ -98,13 +98,20 @@ inline namespace v1
             optional_storage(optional_storage const & x)
              : optional_storage()
             {
-                if(x.has_value())
+                if(auto * p = x.get_pointer())
                 {
-                    this->emplace(*x);
+                    this->emplace(*p);
                 }
             }
 
-            optional_storage(optional_storage &&);
+            optional_storage(optional_storage && rhs) noexcept(std::is_nothrow_move_constructible<T>::value)
+             : optional_storage()
+            {
+                if(auto * p = rhs.get_pointer())
+                {
+                    this->emplace(std::move(*p));
+                }
+            }
 
             // Деструктор
             ~optional_storage()
@@ -125,7 +132,7 @@ inline namespace v1
                 new(std::addressof(this->value_))T(std::forward<Args>(args)...);
                 this->has_value_ = true;
 
-                return *(*this);
+                return *(this->get_pointer());
             }
 
             // Немодифицирующие операции
@@ -134,16 +141,14 @@ inline namespace v1
                 return this->has_value_;
             }
 
-            T const & operator*() const &
+            T const * get_pointer() const
             {
-                assert(this->has_value());
-                return this->value_;
+                return this->has_value() ? std::addressof(this->value_) : nullptr;
             }
 
-            T & operator*() &
+            T * get_pointer()
             {
-                assert(this->has_value());
-                return this->value_;
+                return this->has_value() ? std::addressof(this->value_) : nullptr;
             }
 
             // Модифицирующие операции
@@ -167,35 +172,54 @@ inline namespace v1
             };
         };
 
-        template <bool>
-        struct delete_copy_ctor
+        template <bool DeleteCopyCtor, bool DeleteMoveCtor>
+        struct copy_move_ctor_deleter;
+
+        // @todo Покрыть тесами так, чтобы требовались все 4 специализации
+
+        template <>
+        struct copy_move_ctor_deleter<false, false>
         {
-            delete_copy_ctor() = default;
-            delete_copy_ctor(delete_copy_ctor const & ) = default;
+            copy_move_ctor_deleter() = default;
+            copy_move_ctor_deleter(copy_move_ctor_deleter const & ) = default;
+            copy_move_ctor_deleter(copy_move_ctor_deleter && ) noexcept = default;
         };
 
         template <>
-        struct delete_copy_ctor<true>
+        struct copy_move_ctor_deleter<true, false>
         {
-            delete_copy_ctor() = default;
-            delete_copy_ctor(delete_copy_ctor const & ) = delete;
+            copy_move_ctor_deleter() = default;
+            copy_move_ctor_deleter(copy_move_ctor_deleter const & ) = delete;
+            copy_move_ctor_deleter(copy_move_ctor_deleter && ) noexcept = default;
         };
+
+        template <>
+        struct copy_move_ctor_deleter<true, true>
+        {
+            copy_move_ctor_deleter() = default;
+            copy_move_ctor_deleter(copy_move_ctor_deleter const & ) = delete;
+            copy_move_ctor_deleter(copy_move_ctor_deleter && ) noexcept = delete;
+        };
+
+        template <class T>
+        using copy_move_ctor_deleter_for
+            = copy_move_ctor_deleter<!std::is_copy_constructible<T>::value,
+                                     !std::is_move_constructible<T>::value>;
     }
     // namespace detail
     /// @endcond
 
     /** @brief Необязательный объект
     @tparam T Тип объекта, который может содержаться в <tt>optional<T></tt>
-    @todo get_pointer и выразить через него те функции, где это будет более элегантно
     @todo Проверить спецификации constexpr
     @todo стратегия проверок
     @todo монадический интерфейс
     @todo Синтаксис optional_value = {}
-    @todo constexpr
+    @todo Убедиться, что размер optional соответствует размеру struct {bool, T};
     */
     template <class T>
     class optional
-     : private detail::delete_copy_ctor<!std::is_copy_constructible<T>::value>
+     : private detail::copy_move_ctor_deleter_for<T>
     {
     public:
         // Типы
@@ -215,16 +239,22 @@ inline namespace v1
         //@}
 
         /** @brief Конструктор копий
-        @param x копируемый объект
-        Если @c x содержит значение, то инициализирует значение <tt>*this</tt> копией этого
+        @param rhs копируемый объект
+        Если @c rhs содержит значение, то инициализирует значение <tt>*this</tt> копией этого
         значения.
-        @post <tt>this->has_value() == x.has_value()</tt>
-        @throw Любые исключения, порождаемые конструктором копий типа @c T
-        @todo Этот конструктор должен быть =delete, если !std::is_copy_constructible<T>::value - покрыть тестом
+        @post <tt>this->has_value() == rhs.has_value()</tt>
+        @throw Любые исключения, порождаемые выбранным конструктором типа @c T
         */
-        optional(optional const & x) = default;
+        optional(optional const & rhs) = default;
 
-        optional(optional && x) = delete;
+        /** @brief Конструктор перемещения. Если @c rhs содержит значение, то инициализирует
+        значение <tt>*this</tt> выражением <tt>std::move(*rhs)</tt>
+        @param rhs перемещаемый объект
+        @post <tt>this->has_value() == rhs.has_value()</tt>
+        @throw Любые исключения, порождаемые выбранным конструктором типа @c T
+        @todo Исключать из перегрузки, если не is_move_constructible_v<T>
+        */
+        optional(optional && rhs) = default;
 
         /** @brief Инициализирует хранимое значение как объект типа @c T аргументами
         <tt>std::forward<Args>(args)...</tt>
@@ -238,13 +268,15 @@ inline namespace v1
             this->emplace(std::forward<Args>(args)...);
         }
 
-        // @todo Реализовать все конструкторы
+        // @todo Конструктор со списком инициализации и дополнительными аргументами
+        // @todo Конструктор с одним значением
+        // @todo Конструктор на основе optional с другим типом
+        // @todo Конструктор на основе временного optional с другим типом
 
         /// @brief Деструктор
         ~optional() = default;
 
-        // @todo Реализовать Присваивание
-
+        // Присваивание
         /** @brief Если <tt>*this</tt> не содержит значения, то ничего не делает, иначе уничтожает
         хранимое значение
         @post <tt>this->has_value() == false</tt>
@@ -256,8 +288,15 @@ inline namespace v1
             return *this;
         }
 
-        optional & operator=(optional const & x) = delete;
-        optional & operator=(optional && x) = delete;
+        // @todo Реализовать
+        optional & operator=(optional const & x);
+
+        // @todo Реализовать (покрыть тестом, в том числе noexcept)
+        optional & operator=(optional && x);
+
+        // @todo Присваивание значения
+        // @todo Присваивание optional с другим типом
+        // @todo Присваивание временного optional с другим типом
 
         /** @brief Уничтожает текущее значение (если оно имеется), а затем создаёт новое значение
         с помощью вызова конструктора <tt>T(std::forward<Args>(args)...)</tt>.
@@ -279,23 +318,28 @@ inline namespace v1
             return this->storage_.emplace(std::forward<Args>(args)...);
         }
 
+        // @todo emplace со списком инициализации и дополнительными аргументами
+
         // @todo Реализовать Обмен
 
         // @todo Реализовать все Немодифицирующие операции
         //@{
-        /** @brief Содержит ли <tt>*this</tt> значение
-        @return @b true тогда и только тогда, когда <tt>*this</tt> содержит значение
+        /** @brief Нестандартная функция доступа к указателю на хранимое значение (если оно имеется)
+        @return Если <tt>*this</tt> содержит значение, то возвращает указатель на это значение, в
+        противном случае -- @c nullptr.
         */
-        bool has_value() const noexcept
+        T const * get_pointer() const
         {
-            return this->storage_.has_value();
+            return this->storage_.get_pointer();
         }
 
-        explicit operator bool() const noexcept
+        T * get_pointer()
         {
-            return this->has_value();
+            return this->storage_.get_pointer();
         }
         //@}
+
+        // @todo operator->
 
         //@{
         /** @brief Доступ к значению без проверки его наличия
@@ -310,7 +354,7 @@ inline namespace v1
             // @todo Проверка через стратегию
             assert(this->has_value());
 
-            return *(this->storage_);
+            return *(this->get_pointer());
         }
 
         T & operator*() &
@@ -318,7 +362,22 @@ inline namespace v1
             // @todo Проверка через стратегию
             assert(this->has_value());
 
-            return *(this->storage_);
+            return *(this->get_pointer());
+        }
+        //@}
+
+        //@{
+        /** @brief Содержит ли <tt>*this</tt> значение
+        @return @b true тогда и только тогда, когда <tt>*this</tt> содержит значение
+        */
+        explicit operator bool() const noexcept
+        {
+            return this->has_value();
+        }
+
+        bool has_value() const noexcept
+        {
+            return this->storage_.has_value();
         }
         //@}
 
@@ -332,28 +391,30 @@ inline namespace v1
         */
         T const & value() const &
         {
-            if(!this->has_value())
+            if(auto * p = this->get_pointer())
             {
-                throw grabin::bad_optional_access{};
+                return *p;
             }
             else
             {
-                return *(*this);
+                throw grabin::bad_optional_access{};
             }
         }
 
         T & value() &
         {
-            if(!this->has_value())
+            if(auto * p = this->get_pointer())
             {
-                throw grabin::bad_optional_access{};
+                return *p;
             }
             else
             {
-                return *(*this);
+                throw grabin::bad_optional_access{};
             }
         }
         //@}
+
+        // @todo value_or
 
         // Модифицирующие операции
         /** @brief Если <tt>*this</tt> содержит значение, то вызывает для него деструктор, в
@@ -369,6 +430,7 @@ inline namespace v1
         detail::optional_storage<T> storage_;
     };
 
+    // @todo Указание для вывода шаблонного параметра из конструктора
 
     // Сравнение с nullopt
     //@{
@@ -408,6 +470,11 @@ inline namespace v1
     }
     //@}
 
+    // @todo Оператор "меньше" c nullopt
+    // @todo Оператор "меньше или равно" c nullopt
+    // @todo Оператор "больше" c nullopt
+    // @todo Оператор "больше или равно" c nullopt
+
     // Сравнение с объектом
     /** @brief Сравнение @c optional и значения
     @param lhs объект с необязательным значением
@@ -417,7 +484,14 @@ inline namespace v1
     template <class T, class U>
     bool operator==(optional<T> const & lhs, U const & rhs)
     {
-        return lhs.has_value() ? lhs.value() == rhs : false;
+        if(auto * p = lhs.get_pointer())
+        {
+            return *p == rhs;
+        }
+        else
+        {
+            return false;
+        }
     }
 
     /** @brief Сравнение @c optional и значения
@@ -426,7 +500,44 @@ inline namespace v1
     @return Эквивалентно <tt>rhs.has_value() ? lhs == rhs.value() : false</tt>
     */
     template <class T, class U>
-    bool operator==(T const & lhs, optional<U> const & rhs);
+    bool operator==(T const & lhs, optional<U> const & rhs)
+    {
+        if(auto * p = rhs.get_pointer())
+        {
+            return lhs == *p;
+        }
+        else
+        {
+            return false;
+        }
+    }
+
+    /** @brief Оператор "не равно" для @c optional и значений
+    @param lhs объект с необязательным значением
+    @param rhs значение
+    @return <tt>!(lhs == rhs)</tt>
+    */
+    template <class T, class U>
+    bool operator!=(optional<T> const & lhs, U const & rhs)
+    {
+        return !(lhs == rhs);
+    }
+
+    /** @brief Оператор "не равно" для значения и @c optional
+    @param lhs значение
+    @param rhs объект с необязательным значением
+    @return <tt>!(lhs == rhs)</tt>
+    */
+    template <class T, class U>
+    bool operator!=(T const & lhs, optional<U> const & rhs)
+    {
+        return !(lhs == rhs);
+    }
+
+    // @todo Оператор "меньше" с значением
+    // @todo Оператор "меньше или равно" с значением
+    // @todo Оператор "больше" с значением
+    // @todo Оператор "больше или равно" с значением
 
     // Операторы сравнения
     /** @brief Оператор "равно"
@@ -438,9 +549,9 @@ inline namespace v1
     template <class T, class U>
     bool operator==(optional<T> const & lhs, optional<U> const & rhs)
     {
-        if(rhs.has_value())
+        if(auto * p = rhs.get_pointer())
         {
-            return lhs == rhs.value();
+            return lhs == *p;
         }
         else
         {
@@ -459,7 +570,19 @@ inline namespace v1
         return !(lhs == rhs);
     }
 
-    // @todo Реализовать прочую функциональность
+    // @todo Оператор "меньше"
+    // @todo Оператор "меньше или равно"
+    // @todo Оператор "больше"
+    // @todo Оператор "больше или равно"
+
+    // Специализированные алгоритмы
+    // @todo swap
+
+    // @todo make_optional - один аргумент
+    // @todo make_optional - несколько аргументов
+    // @todo make_optional - список инициализации и несколько аргументов
+
+    // @todo Поддержка hash
 }
 // namespace v1
 }

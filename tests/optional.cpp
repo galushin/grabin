@@ -401,3 +401,131 @@ TEST_CASE("optional : equal to nullopt")
 
     grabin_test::check(property);
 }
+
+TEST_CASE("optional : equality of T and optional<T>")
+{
+    using Value = std::string;
+    using Optional = grabin::optional<wrapper<Value, std::true_type>>;
+
+    auto property = [](Value const & value_1, Value const & value_2)
+    {
+        Optional const no_value{};
+        Optional const with_value_1(grabin::in_place, value_1);
+        wrapper<Value, std::false_type> const wrapped_1(value_1);
+        wrapper<Value, std::false_type> const wrapped_2(value_2);
+
+        CHECK(wrapped_2 != no_value);
+        CHECK(!(wrapped_2 == no_value));
+
+        CHECK(no_value != wrapped_2);
+        CHECK(!(no_value == wrapped_2));
+
+        CHECK(wrapped_1 == with_value_1);
+        CHECK(with_value_1 == wrapped_1);
+
+        CHECK(!(wrapped_1 != with_value_1));
+        CHECK(!(with_value_1 != wrapped_1));
+
+        CHECK((wrapped_2 == with_value_1) == (wrapped_2 == wrapped_1));
+        CHECK((with_value_1 == wrapped_2) == (wrapped_1 == wrapped_2));
+
+        CHECK((wrapped_2 != with_value_1) == !(wrapped_2 == wrapped_1));
+        CHECK((with_value_1 != wrapped_2) == !(wrapped_1 == wrapped_2));
+    };
+
+    grabin_test::check(property);
+}
+
+TEST_CASE("optional : get_pointer const")
+{
+    using Value = std::string;
+
+    auto property = [](Value const & value)
+    {
+        grabin::optional<Value> const obj0;
+        grabin::optional<Value> const obj1(grabin::in_place, value);
+
+        CHECK(obj0.get_pointer() == nullptr);
+
+        REQUIRE(obj1.get_pointer() != nullptr);
+        CHECK(*obj1.get_pointer() == value);
+
+    };
+
+    grabin_test::check(property);
+}
+
+TEST_CASE("optional : get_pointer non-const")
+{
+    using Value = std::string;
+
+    auto property = [](Value const & value, Value const & new_value)
+    {
+        grabin::optional<Value> obj0;
+        grabin::optional<Value> obj1(grabin::in_place, value);
+
+        CHECK(obj0.get_pointer() == nullptr);
+
+        REQUIRE(obj1.get_pointer() != nullptr);
+        CHECK(*obj1.get_pointer() == value);
+
+        *obj1.get_pointer() = new_value;
+        CHECK(*obj1.get_pointer() == new_value);
+
+    };
+
+    grabin_test::check(property);
+}
+
+static_assert(std::is_nothrow_move_constructible<grabin::optional<int>>::value, "");
+
+namespace
+{
+    class with_throwing_move_ctor
+    {
+    public:
+        with_throwing_move_ctor(with_throwing_move_ctor && );
+
+    private:
+
+    };
+
+    class not_move_constructible
+    {
+    public:
+        not_move_constructible(not_move_constructible &&) = delete;
+    };
+}
+
+static_assert(!std::is_nothrow_move_constructible<with_throwing_move_ctor>::value, "");
+static_assert(!std::is_nothrow_move_constructible<grabin::optional<with_throwing_move_ctor>>::value, "");
+
+static_assert(!std::is_move_constructible<not_move_constructible>::value, "");
+static_assert(!std::is_move_constructible<grabin::optional<not_move_constructible>>::value, "");
+
+TEST_CASE("optional : move ctor")
+{
+    using Value = int;
+    using Optional = grabin::optional<std::unique_ptr<Value>>;
+
+    // @todo Проверить спецификацию noexcept
+
+    auto property = [](Value const & value)
+    {
+        Optional src0;
+        Optional src1(grabin::in_place, std::make_unique<Value>(value));
+
+        Optional const dest0(std::move(src0));
+
+        CHECK(dest0 == grabin::nullopt);
+
+        Optional const dest1(std::move(src1));
+
+        REQUIRE(src1.has_value());
+        REQUIRE(dest1.has_value());
+        REQUIRE(dest1.value() != nullptr);
+        CHECK(*dest1.value() == value);
+    };
+
+    grabin_test::check(property);
+}
