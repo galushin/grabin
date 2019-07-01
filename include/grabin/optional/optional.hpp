@@ -20,6 +20,7 @@ Grabin -- это свободной программное обеспечени�
 
 /** @file grabin/optional/optional.hpp
  @brief Необязательный объект
+ @todo Можно ли вы разить через < все остальные операторы неравенства (в том числе -- гетерогенные)?
 */
 
 #include <grabin/detail/config.hpp>
@@ -470,10 +471,81 @@ inline namespace v1
     }
     //@}
 
-    // @todo Оператор "меньше" c nullopt
-    // @todo Оператор "меньше или равно" c nullopt
-    // @todo Оператор "больше" c nullopt
-    // @todo Оператор "больше или равно" c nullopt
+    /** @brief Оператор "меньше" для @c optional и @c nullopt_t
+    @return @b false
+    */
+    template <class T>
+    bool operator<(optional<T> const &, nullopt_t) noexcept
+    {
+        return false;
+    }
+
+    /** @brief Оператор меньше для @c nullopt_t и @c optional
+    @param obj объект, сравниваемый с @c nullopt
+    @return <tt>obj.has_value()</tt>
+    */
+    template <class T>
+    bool operator<(nullopt_t, optional<T> const & obj) noexcept
+    {
+        return obj.has_value();
+    }
+
+    /** @brief Оператор "меньше или равно" для @c optional и @c nullopt_t
+    @param obj объект, сравниваемый с @c nullopt
+    @return <tt>!obj.has_value()</tt>
+    */
+    template <class T>
+    bool operator<=(optional<T> const & obj, nullopt_t) noexcept
+    {
+        return !obj.has_value();
+    }
+
+    /** @brief Оператор "меньше или равно" для @c nullopt_t и @c optional
+    @return @b true
+    */
+    template <class T>
+    bool operator<=(nullopt_t, optional<T> const &) noexcept
+    {
+        return true;
+    }
+
+    /** @brief Оператор "больше" для @c optional и @c nullopt_t
+    @param obj объект, сравниваемый с @c nullopt
+    @return <tt>obj.has_value()</tt>
+    */
+    template <class T>
+    bool operator>(optional<T> const & obj, nullopt_t) noexcept
+    {
+        return obj.has_value();
+    }
+
+    /** @brief Оператор "больше" для @c nullopt_t и @c optional
+    @return @b false
+    */
+    template <class T>
+    bool operator>(nullopt_t, optional<T> const &) noexcept
+    {
+        return false;
+    }
+
+    /** @brief Оператор "больше или равно" для @c optional и @c nullopt_t
+    @return @b true
+    */
+    template <class T>
+    bool operator>=(optional<T> const &, nullopt_t) noexcept
+    {
+        return true;
+    }
+
+    /** @brief Оператор "больше или равно" для @c nullopt_t и @c optional
+    @param obj объект, сравниваемый с @c nullopt
+    @return <tt>!obj.has_value()</tt>
+    */
+    template <class T>
+    bool operator>=(nullopt_t, optional<T> const & obj) noexcept
+    {
+        return !obj.has_value();
+    }
 
     // Сравнение с объектом
     /** @brief Сравнение @c optional и значения

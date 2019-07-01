@@ -508,8 +508,6 @@ TEST_CASE("optional : move ctor")
     using Value = int;
     using Optional = grabin::optional<std::unique_ptr<Value>>;
 
-    // @todo Проверить спецификацию noexcept
-
     auto property = [](Value const & value)
     {
         Optional src0;
@@ -525,6 +523,106 @@ TEST_CASE("optional : move ctor")
         REQUIRE(dest1.has_value());
         REQUIRE(dest1.value() != nullptr);
         CHECK(*dest1.value() == value);
+    };
+
+    grabin_test::check(property);
+}
+
+TEST_CASE("optional : less with nullopt_t")
+{
+    using Value = int;
+    using Optional = grabin::optional<Value>;
+
+    Optional const obj0;
+
+    CHECK(!(obj0 < grabin::nullopt));
+    CHECK(!(grabin::nullopt < obj0));
+
+    static_assert(noexcept(obj0 < grabin::nullopt), "");
+    static_assert(noexcept(grabin::nullopt < obj0), "");
+
+    auto property = [](Value const & value)
+    {
+        Optional const obj(grabin::in_place, value);
+
+        CHECK(obj.has_value());
+        CHECK(grabin::nullopt < obj);
+        CHECK(!(obj < grabin::nullopt));
+    };
+
+    grabin_test::check(property);
+}
+
+TEST_CASE("optional : less or equal with nullopt_t")
+{
+    using Value = int;
+    using Optional = grabin::optional<Value>;
+
+    Optional const obj0;
+
+    CHECK(obj0 <= grabin::nullopt);
+    CHECK(grabin::nullopt <= obj0);
+
+    static_assert(noexcept(obj0 <= grabin::nullopt), "");
+    static_assert(noexcept(grabin::nullopt <= obj0), "");
+
+    auto property = [](Value const & value)
+    {
+        Optional const obj(grabin::in_place, value);
+
+        CHECK(obj.has_value());
+        CHECK(grabin::nullopt <= obj);
+        CHECK(!(obj <= grabin::nullopt));
+    };
+
+    grabin_test::check(property);
+}
+
+TEST_CASE("optional : greater with nullopt_t")
+{
+    using Value = int;
+    using Optional = grabin::optional<Value>;
+
+    Optional const obj0;
+
+    CHECK(!(obj0 > grabin::nullopt));
+    CHECK(!(grabin::nullopt > obj0));
+
+    static_assert(noexcept(obj0 > grabin::nullopt), "");
+    static_assert(noexcept(grabin::nullopt > obj0), "");
+
+    auto property = [](Value const & value)
+    {
+        Optional const obj(grabin::in_place, value);
+
+        CHECK(obj.has_value());
+        CHECK(!(grabin::nullopt > obj));
+        CHECK(obj > grabin::nullopt);
+    };
+
+    grabin_test::check(property);
+}
+
+TEST_CASE("optional : greater or equal with nullopt_t")
+{
+    using Value = int;
+    using Optional = grabin::optional<Value>;
+
+    Optional const obj0;
+
+    CHECK(obj0 >= grabin::nullopt);
+    CHECK(grabin::nullopt >= obj0);
+
+    static_assert(noexcept(obj0 <= grabin::nullopt), "");
+    static_assert(noexcept(grabin::nullopt <= obj0), "");
+
+    auto property = [](Value const & value)
+    {
+        Optional const obj(grabin::in_place, value);
+
+        CHECK(obj.has_value());
+        CHECK(!(grabin::nullopt >= obj));
+        CHECK(obj >= grabin::nullopt);
     };
 
     grabin_test::check(property);
