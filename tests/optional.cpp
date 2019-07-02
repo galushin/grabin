@@ -297,7 +297,60 @@ namespace
     {
         return x.value == y.value;
     }
+
+    template <class T, class TagT, class U, class TagU>
+    bool operator!=(wrapper<T, TagT> const & x, wrapper<U, TagU> const & y)
+    {
+        return x.value != y.value;
+    }
+
+    template <class T, class TagT, class U, class TagU>
+    bool operator<(wrapper<T, TagT> const & x, wrapper<U, TagU> const & y)
+    {
+        return x.value < y.value;
+    }
+
+    template <class T, class TagT, class U, class TagU>
+    bool operator<=(wrapper<T, TagT> const & x, wrapper<U, TagU> const & y)
+    {
+        return x.value <= y.value;
+    }
+
+    template <class T, class TagT, class U, class TagU>
+    bool operator>(wrapper<T, TagT> const & x, wrapper<U, TagU> const & y)
+    {
+        return x.value > y.value;
+    }
+
+    template <class T, class TagT, class U, class TagU>
+    bool operator>=(wrapper<T, TagT> const & x, wrapper<U, TagU> const & y)
+    {
+        return x.value >= y.value;
+    }
+
+    template <class C, class CT, class T, class Tag>
+    std::basic_ostream<C, CT> &
+    operator<<(std::basic_ostream<C, CT> & os, wrapper<T, Tag> const & x)
+    {
+        return os << x.value;
+    }
 }
+
+namespace grabin_test
+{
+    template <class T, class Tag>
+    struct Arbitrary<wrapper<T, Tag>>
+    {
+        using value_type = wrapper<T, Tag>;
+
+        template <class Engine>
+        static value_type generate(Engine & rnd, generation_t generation)
+        {
+            return value_type(grabin_test::Arbitrary<T>::generate(rnd, generation));
+        }
+    };
+}
+// namespace grabin_test
 
 TEST_CASE("optional : equality")
 {
@@ -623,6 +676,68 @@ TEST_CASE("optional : greater or equal with nullopt_t")
         CHECK(obj.has_value());
         CHECK(!(grabin::nullopt >= obj));
         CHECK(obj >= grabin::nullopt);
+    };
+
+    grabin_test::check(property);
+}
+
+TEST_CASE("optional : compare empty to value")
+{
+    using Value = wrapper<int, std::true_type>;
+    using Optional = grabin::optional<wrapper<int, std::false_type>>;
+
+    auto property = [](Value const & value)
+    {
+        Optional const obj{};
+
+        CHECK(!obj.has_value());
+
+        CHECK(obj < value);
+        CHECK(!(value < obj));
+
+        CHECK(obj <= value);
+        CHECK(!(value <= obj));
+
+        CHECK(!(obj > value));
+        CHECK(value > obj);
+
+        CHECK(!(obj >= value));
+        CHECK(value >= obj);
+    };
+
+    grabin_test::check(property);
+}
+
+TEST_CASE("optional : compare non-empty to value")
+{
+    using Value = int;
+    using Optional = grabin::optional<Value>;
+
+    auto property = [](Value const & value, Value const & init_value)
+    {
+        Optional const obj(grabin::in_place, init_value);
+
+        CHECK(obj.has_value());
+
+        CHECK(!(obj < init_value));
+        CHECK(!(init_value < obj));
+        CHECK((obj < value) == (init_value < value));
+        CHECK((value < obj) == (value < init_value));
+
+        CHECK(obj <= init_value);
+        CHECK(init_value <= obj);
+        CHECK((obj <= value) == (init_value <= value));
+        CHECK((value <= obj) == (value <= init_value));
+
+        CHECK(!(obj > init_value));
+        CHECK(!(init_value > obj));
+        CHECK((obj > value) == (init_value > value));
+        CHECK((value > obj) == (value > init_value));
+
+        CHECK(obj >= init_value);
+        CHECK(init_value >= obj);
+        CHECK((obj >= value) == (init_value >= value));
+        CHECK((value >= obj) == (value >= init_value));
     };
 
     grabin_test::check(property);

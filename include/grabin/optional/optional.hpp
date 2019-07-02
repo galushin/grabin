@@ -587,29 +587,184 @@ inline namespace v1
     /** @brief Оператор "не равно" для @c optional и значений
     @param lhs объект с необязательным значением
     @param rhs значение
-    @return <tt>!(lhs == rhs)</tt>
+    @todo Использовать оператор !=
+    @return <tt>!lhs ? true : lhs.value() != rhs</tt>
     */
     template <class T, class U>
     bool operator!=(optional<T> const & lhs, U const & rhs)
     {
-        return !(lhs == rhs);
+        if(auto * p = lhs.get_pointer())
+        {
+            return *p != rhs;
+        }
+        else
+        {
+            return true;
+        }
     }
 
     /** @brief Оператор "не равно" для значения и @c optional
     @param lhs значение
     @param rhs объект с необязательным значением
-    @return <tt>!(lhs == rhs)</tt>
+    @todo Использовать оператор !=
+    @return <tt>!lhs ? true : lhs != rhs.value()</tt>
     */
     template <class T, class U>
     bool operator!=(T const & lhs, optional<U> const & rhs)
     {
-        return !(lhs == rhs);
+        if(auto * p = rhs.get_pointer())
+        {
+            return lhs != *p;
+        }
+        else
+        {
+            return true;
+        }
     }
 
-    // @todo Оператор "меньше" с значением
-    // @todo Оператор "меньше или равно" с значением
-    // @todo Оператор "больше" с значением
-    // @todo Оператор "больше или равно" с значением
+    /** @brief Оператор "меньше" для @c optional и значений
+    @param lhs объект с необязательным значением
+    @param rhs значение
+    @return <tt>!lhs ? true : lhs.value() < rhs</tt>
+    */
+    template <class T, class U>
+    bool operator<(optional<T> const & lhs, U const & rhs)
+    {
+        if(auto * p = lhs.get_pointer())
+        {
+            return *p < rhs;
+        }
+        else
+        {
+            return true;
+        }
+    }
+
+    /** @brief Оператор "меньше" для значений и @c optional
+    @param lhs значение
+    @param rhs объект с необязательным значением
+    @return <tt>!rhs ? false : lhs < rhs.value()</tt>
+    */
+    template <class T, class U>
+    bool operator<(T const & lhs, optional<U> const & rhs)
+    {
+        if(auto * p = rhs.get_pointer())
+        {
+            return lhs < *p;
+        }
+        else
+        {
+            return false;
+        }
+    }
+
+    /** @brief Оператор "меньше или равно" для @c optional и значений
+    @param lhs объект с необязательным значением
+    @param rhs значение
+    @return <tt>!lhs ? true : lhs.value() <= rhs</tt>
+    */
+    template <class T, class U>
+    bool operator<=(optional<T> const & lhs, U const & rhs)
+    {
+        if(auto * p = lhs.get_pointer())
+        {
+            return *p <= rhs;
+        }
+        else
+        {
+            return true;
+        }
+    }
+
+    /** @brief Оператор "меньше или равно" для значений и @c optional
+    @param lhs значение
+    @param rhs объект с необязательным значением
+    @return <tt>!rhs ? false : lhs <= rhs.value()</tt>
+    */
+    template <class T, class U>
+    bool operator<=(T const & lhs, optional<U> const & rhs)
+    {
+        if(auto * p = rhs.get_pointer())
+        {
+            return lhs <= *p;
+        }
+        else
+        {
+            return false;
+        }
+    }
+
+    /** @brief Оператор "больше" для @c optional и значений
+    @param lhs объект с необязательным значением
+    @param rhs значение
+    @return <tt>!lhs ? false : lhs.value() > rhs</tt>
+    */
+    template <class T, class U>
+    bool operator>(optional<T> const & lhs, U const & rhs)
+    {
+        if(auto * p = lhs.get_pointer())
+        {
+            return *p > rhs;
+        }
+        else
+        {
+            return false;
+        }
+    }
+
+    /** @brief Оператор "больше" для значений и @c optional
+    @param lhs значение
+    @param rhs объект с необязательным значением
+    @return <tt>!rhs ? true : lhs > rhs.value()</tt>
+    */
+    template <class T, class U>
+    bool operator>(T const & lhs, optional<U> const & rhs)
+    {
+        if(auto * p = rhs.get_pointer())
+        {
+            return lhs > *p;
+        }
+        else
+        {
+            return true;
+        }
+    }
+
+    /** @brief Оператор "больше или равно" для @c optional и значений
+    @param lhs объект с необязательным значением
+    @param rhs значение
+    @return <tt>!lhs ? false : lhs.value() >= rhs</tt>
+    */
+    template <class T, class U>
+    bool operator>=(optional<T> const & lhs, U const & rhs)
+    {
+        if(auto * p = lhs.get_pointer())
+        {
+            return *p >= rhs;
+        }
+        else
+        {
+            return false;
+        }
+    }
+
+    /** @brief Оператор "больше или равно" для значений и @c optional
+    @param lhs значение
+    @param rhs объект с необязательным значением
+    @return <tt>!rhs ? true : lhs >= rhs.value()</tt>
+    */
+    template <class T, class U>
+    bool operator>=(T const & lhs, optional<U> const & rhs)
+    {
+        if(auto * p = rhs.get_pointer())
+        {
+            return lhs >= *p;
+        }
+        else
+        {
+            return true;
+        }
+    }
 
     // Операторы сравнения
     /** @brief Оператор "равно"

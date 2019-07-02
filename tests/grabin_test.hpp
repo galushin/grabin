@@ -158,6 +158,18 @@ namespace grabin_test
     };
 
     // Специализации Arbitrary
+    template <>
+    struct Arbitrary<char>
+    {
+        using value_type = char;
+
+        template <class Engine>
+        static value_type generate(Engine & rnd, generation_t)
+        {
+            return std::uniform_int_distribution<char>('0', 'z')(rnd);
+        }
+    };
+
     template <class T>
     struct Arbitrary<T, std::enable_if_t<std::is_integral<T>::value>>
      : ArbitraryInteger<T>
