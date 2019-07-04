@@ -742,3 +742,25 @@ TEST_CASE("optional : compare non-empty to value")
 
     grabin_test::check(property);
 }
+
+#include <set>
+
+TEST_CASE("optional : in_place ctor with initializer_list")
+{
+    using Compare = bool(*)(int const &, int const & y);
+    using Value = std::set<int, Compare>;
+    using Optional = grabin::optional<Value>;
+
+    static_assert(std::is_constructible<Value, std::initializer_list<int>&, Compare&&>::value, "");
+    static_assert(std::is_constructible<Optional, grabin::in_place_t, std::initializer_list<int>&, Compare&&>::value, "");
+    static_assert(!std::is_constructible<Value, std::initializer_list<int>&, int&&>::value, "");
+    static_assert(!std::is_constructible<Optional, grabin::in_place_t, std::initializer_list<int>&, int&&>::value, "");
+
+    auto const cmp = Compare([](int const & x, int const & y){ return x > y; });
+
+    Value const expected({1, 2, 3, 4, 5}, cmp);
+    Optional const actual(grabin::in_place, {1, 2, 3, 4, 5}, cmp);
+
+    REQUIRE(actual.has_value());
+    REQUIRE(actual.value() == expected);
+}

@@ -136,6 +136,16 @@ inline namespace v1
                 return *(this->get_pointer());
             }
 
+            template <class U, class... Args>
+            T & emplace(std::initializer_list<U> inits, Args && ... args)
+            {
+                this->reset();
+                new(std::addressof(this->value_))T(inits, std::forward<Args>(args)...);
+                this->has_value_ = true;
+
+                return *(this->get_pointer());
+            }
+
             // Немодифицирующие операции
             bool has_value() const noexcept
             {
@@ -217,6 +227,7 @@ inline namespace v1
     @todo монадический интерфейс
     @todo Синтаксис optional_value = {}
     @todo Убедиться, что размер optional соответствует размеру struct {bool, T};
+    @todo Покрыть тестом ограничение перегрузки emplace(std::initializer_list<U>, Args &&...)
     */
     template <class T>
     class optional
@@ -269,7 +280,20 @@ inline namespace v1
             this->emplace(std::forward<Args>(args)...);
         }
 
-        // @todo Конструктор со списком инициализации и дополнительными аргументами
+        /** @brief Конструктор со списком инициализации и дополнительными аргументами
+        @param inits список инициализаторов
+        @param args остальные аргументы
+        @post <tt>*this == T(inits, std::forward<Args>(args)...)</tt>
+        @throw Любые исключения, порождаемые соответствующим конструктором @c T
+        */
+        template <class U, class... Args,
+                  class = std::enable_if_t<std::is_constructible<T, std::initializer_list<U>&, Args&&...>::value>>
+        explicit optional(in_place_t, std::initializer_list<U> inits, Args &&... args)
+         : optional()
+        {
+            this->emplace(inits, std::forward<Args>(args)...);
+        }
+
         // @todo Конструктор с одним значением
         // @todo Конструктор на основе optional с другим типом
         // @todo Конструктор на основе временного optional с другим типом
@@ -319,7 +343,22 @@ inline namespace v1
             return this->storage_.emplace(std::forward<Args>(args)...);
         }
 
-        // @todo emplace со списком инициализации и дополнительными аргументами
+        /** @brief Уничтожает текущее значение (если оно имеется), а затем создаёт новое значение
+        с помощью вызова конструктора <tt>T(inits, std::forward<Args>(args)...)</tt>.
+
+        Если во время выполнение конструктора @c T возникло исключение, то <tt>*this</tt> не
+        содержит значения, а предыдущее значение (если оно имелось) уничтожается.
+        @param inits список инициализаторов
+        @param args остальные аргументы
+        @post <tt>*this == T(inits, std::forward<Args>(args)...)</tt>
+        @throw Любые исключения, порождаемые соответствующим конструктором @c T
+        */
+        template <class U, class... Args,
+                  class = std::enable_if_t<std::is_constructible<T, std::initializer_list<U>&, Args&&...>::value>>
+        T & emplace(std::initializer_list<U> inits, Args &&... args)
+        {
+            return this->storage_.emplace(inits, std::forward<Args>(args)...);
+        }
 
         // @todo Реализовать Обмен
 
