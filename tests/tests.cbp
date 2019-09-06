@@ -43,6 +43,7 @@
 		<Unit filename="../include/grabin/numeric.hpp" />
 		<Unit filename="../include/grabin/numeric/linear_algebra.hpp" />
 		<Unit filename="../include/grabin/operators.hpp" />
+		<Unit filename="../include/grabin/optimization/local_search.hpp" />
 		<Unit filename="../include/grabin/statistics/linear_regression.hpp" />
 		<Unit filename="../include/grabin/statistics/mean.hpp" />
 		<Unit filename="../include/grabin/statistics/variance.hpp" />
@@ -61,6 +62,7 @@
 		<Unit filename="math/matrix.cpp" />
 		<Unit filename="numeric.cpp" />
 		<Unit filename="numeric/linear_algebra.cpp" />
+		<Unit filename="optimization/local_search.cpp" />
 		<Unit filename="statistics/linear_regression.cpp" />
 		<Unit filename="statistics/mean.cpp" />
 		<Unit filename="statistics/variance.cpp" />
