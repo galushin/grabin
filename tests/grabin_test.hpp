@@ -158,6 +158,19 @@ namespace grabin_test
     };
 
     // Специализации Arbitrary
+    template <>
+    struct Arbitrary<bool>
+    {
+    public:
+        using value_type = bool;
+
+        template <class Engine>
+        static value_type generate(Engine & rnd, generation_t)
+        {
+            return std::bernoulli_distribution(0.5)(rnd);
+        }
+    };
+
     template <class T>
     struct Arbitrary<T, std::enable_if_t<std::is_integral<T>::value>>
      : ArbitraryInteger<T>
